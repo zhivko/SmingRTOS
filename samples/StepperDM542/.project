@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>Sming_RTOS</name>
+	<name>RTOS-Stepper-DM542</name>
 	<comment></comment>
 	<projects>
-		<project>RTOS-Stepper-DM542</project>
+		<project>SmingFramework</project>
+		<project>Sming_RTOS</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
