@@ -12,6 +12,10 @@
 #include "rboot-private.h"
 #include <rboot-hex2a.h>
 
+extern void* _text_addr;
+extern void* _text_data;
+extern uint32_t _text_len;
+
 static uint32 check_image(uint32 readpos) {
 	
 	uint8 buffer[BUFFER_SIZE];

@@ -33,6 +33,9 @@ rBootHttpUpdate* otaUpdater;
 
 String ROM_0_URL = "http://192.168.1.24/firmwareRtos/rom0.bin";
 String SPIFFS_URL = "http://192.168.1.24/firmwareRtos/spiff_rom.bin";
+extern int RBOOT_SPIFFS_0;
+extern int RBOOT_SPIFFS_1;
+extern int SPIFF_SIZE;
 
 uint8_t x = 0;
 uint8_t y = 1;
