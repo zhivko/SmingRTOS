@@ -23,6 +23,8 @@
 							<builder id="cdt.managedbuild.builder.gnu.cross.2110485170" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Gnu Make Builder" superClass="cdt.managedbuild.builder.gnu.cross"/>
 							<tool id="cdt.managedbuild.tool.gnu.cross.c.compiler.1168221903" name="Cross GCC Compiler" superClass="cdt.managedbuild.tool.gnu.cross.c.compiler">
 								<option id="gnu.c.compiler.option.include.paths.357494572" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
+									<listOptionValue builtIn="false" value="&quot;${SMING_HOME}/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${SDK_BASE}/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${SMING_HOME}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${SMING_HOME}/system/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${SMING_HOME}/Libraries&quot;"/>
@@ -32,6 +34,8 @@
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.cross.cpp.compiler.1999763015" name="Cross G++ Compiler" superClass="cdt.managedbuild.tool.gnu.cross.cpp.compiler">
 								<option id="gnu.cpp.compiler.option.include.paths.611746109" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
+									<listOptionValue builtIn="false" value="&quot;${SMING_HOME}/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${SDK_BASE}/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${SMING_HOME}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${SMING_HOME}/system/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${SMING_HOME}/Libraries&quot;"/>
@@ -49,6 +53,8 @@
 							<tool id="cdt.managedbuild.tool.gnu.cross.archiver.525412186" name="Cross GCC Archiver" superClass="cdt.managedbuild.tool.gnu.cross.archiver"/>
 							<tool id="cdt.managedbuild.tool.gnu.cross.assembler.587940548" name="Cross GCC Assembler" superClass="cdt.managedbuild.tool.gnu.cross.assembler">
 								<option id="gnu.both.asm.option.include.paths.1067006329" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths" valueType="includePath">
+									<listOptionValue builtIn="false" value="&quot;${SMING_HOME}/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${SDK_BASE}/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${SMING_HOME}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${SMING_HOME}/system/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${SMING_HOME}/Libraries&quot;"/>

@@ -10,6 +10,7 @@ HardwareTimer hardwareTimer;
 #endif
 
 int currWifiIndex = 0;
+
 Vector<String> wifi_sid;
 Vector<String> wifi_pass;
 
@@ -33,20 +34,16 @@ rBootHttpUpdate* otaUpdater;
 
 String ROM_0_URL = "http://192.168.1.24/firmwareRtos/rom0.bin";
 String SPIFFS_URL = "http://192.168.1.24/firmwareRtos/spiff_rom.bin";
-extern int RBOOT_SPIFFS_0;
-extern int RBOOT_SPIFFS_1;
-extern int SPIFF_SIZE;
 
 uint8_t x = 0;
 uint8_t y = 1;
 uint8_t z = 2;
 uint8_t e = 3;
 
-int getNextWifiIndex() {
+void incrementNextWifiIndex() {
 	currWifiIndex++;
 	if (currWifiIndex == (wifi_sid.size()))
 		currWifiIndex = 0;
-	return currWifiIndex;
 }
 
 void reportAnalogue() {
@@ -179,6 +176,7 @@ void OtaUpdate_CallBack(bool result) {
 		if (slot == 0) slot = 1; else slot = 0;
 		// set to boot new rom and then reboot
 		Serial.printf("Firmware updated, rebooting to rom %d...\r\n", slot);
+		sendToClients("Firmware updated, rebooting...");
 		rboot_set_current_rom(slot);
 		System.restart();
 	} else {
@@ -233,6 +231,7 @@ void OtaUpdate() {
 	rboot_config bootconf;
 
 	Serial.println("Updating...");
+	sendToClients("Firmware ota update started...");
 
 	// need a clean object, otherwise if run before and failed will not run again
 	if (otaUpdater) delete otaUpdater;
@@ -545,14 +544,13 @@ server.setWebSocketBinaryHandler(wsBinaryReceived);
 server.setWebSocketDisconnectionHandler(wsDisconnected);
 
 Serial.println("\r\n=== WEB SERVER STARTED ===");
-Serial.println(WifiStation.getIP());
+Serial.println(WifiStation.getIP().toString());
 Serial.println("==============================\r\n");
 }
 
 // Will be called when WiFi station was connected to AP
 void connectOk() {
-
-Serial.println("I'm CONNECTED");
+Serial.println("I'm CONNECTED to AP_SSID=" + wifi_sid.get(currWifiIndex));
 Serial.println("IP: ");
 String ipString = WifiStation.getIP().toString();
 Serial.println(ipString);
@@ -594,10 +592,10 @@ initPins();
 
 void connectNotOk() {
 WifiStation.enable(false);
-int nextId = getNextWifiIndex();
-WifiStation.config(wifi_sid.get(nextId), wifi_pass.get(nextId));
+incrementNextWifiIndex();
+WifiStation.config(wifi_sid.get(currWifiIndex), wifi_pass.get(currWifiIndex),false);
 WifiStation.enable(true);
-WifiStation.waitConnection(connectOk, 7, connectNotOk);
+WifiStation.waitConnection(connectOk, 12, connectNotOk);
 }
 
 void init() {
@@ -638,13 +636,15 @@ debugf("spiffs disabled");
 #endif
    //ShowInfo();
 
-wifi_sid.add("AsusKZ");
 wifi_sid.add("Sintex");
-wifi_pass.add("Doitman1");
+wifi_sid.add("AsusKZ");
+//wifi_sid.add("Sintex2");
 wifi_pass.add("sintex92");
-
-WifiStation.config(wifi_sid.get(currWifiIndex), wifi_pass.get(currWifiIndex));
+wifi_pass.add("Doitman1");
+//wifi_pass.add("sintex92");
+WifiAccessPoint.enable(false);
+WifiStation.config(wifi_sid.get(currWifiIndex), wifi_pass.get(currWifiIndex), false);
 WifiStation.enable(true);
-WifiStation.waitConnection(connectOk, 7, connectNotOk);
+WifiStation.waitConnection(connectOk, 6, connectNotOk);
 }
 

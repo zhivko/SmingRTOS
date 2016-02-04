@@ -5,6 +5,7 @@
 
 Timer procTimer;
 bool state = true;
+Serial serial1 = Serial(UART_ID_1);
 
 void blink()
 {
