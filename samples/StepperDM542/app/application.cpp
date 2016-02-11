@@ -49,22 +49,22 @@ void incrementNextWifiIndex() {
 void reportAnalogue() {
 	char buf[30];
 	char buf1[30];
-
-	debugf("Reading laser serial data...");
+	char data[4];
 
 	/*
-	1 ... BROWN        ... 24 +
+	1 ... BROWN        ... 12V ... 24V +
 	2 ... WHITE        ... RXD
 	3 ... BLUE         ... GND
 	4...  BLACK        ... not used
-	5...  YELOW/GREEN  ...TXD
+	5...  YELOW/GREEN  ... TXD
 	 */
 
 
 
 	char terminator = {0x0D};
-	String result = Serial.readStringUntil(terminator);
-	sprintf(buf, "Analogue: %s", result.c_str());
+	//Serial.readBytes(data,2);
+	Serial.readBytesUntil(terminator, data, 2);
+	sprintf(buf, "Analogue: %s", (data[0]*255 + data[1]));
 	String message = String(buf);
 
 	if (!message.equals(lastPositionMessage)) {
@@ -73,7 +73,7 @@ void reportAnalogue() {
 			clients[i].sendString(message);
 		}
 		lastPositionMessage = message;
-		//Serial.printf("Analogue: %d\r\n", analogue);
+		Serial.printf("Analogue: %d", (data[0]*255 + data[1]));
 	}
 }
 
@@ -136,6 +136,7 @@ void IRAM_ATTR AnalogReadTimerInt() {
 	floatAnalog = analogSum / added;
 	hardwareTimer.initializeUs(deltat, AnalogReadTimerInt);
 	 */
+
 }
 
 void IRAM_ATTR StepperTimerInt() {
@@ -562,16 +563,16 @@ Serial.println("Type 'help' and press enter for instructions.");
 Serial.println();
 Serial.setCallback(serialCallBack);
 
-if (ipString.equals("192.168.1.114")) {
+if (ipString.equals("192.168.1.115") || ipString.equals("192.168.1.37")) {
 // distance sensor
 Serial.println("Distance sensor");
 deltat = 100000;
 //hx711 = HX711(4, 5);
 //hx711.set_gain(64);
 //hx711.tare(15);
-reportTimer.initializeMs(100, reportAnalogue).start();
-hardwareTimer.initializeUs(deltat, AnalogReadTimerInt);
-hardwareTimer.startOnce();
+reportTimer.initializeMs(1000, reportAnalogue).start();
+//hardwareTimer.initializeUs(deltat, AnalogReadTimerInt);
+//hardwareTimer.startOnce();
 } else if (ipString.equals("192.168.1.111")
 	|| ipString.equals("192.168.1.112")) {
 // 4 axis stepper driver
@@ -604,7 +605,7 @@ void init() {
 
 Serial.systemDebugOutput(true);
 System.setCpuFrequency(eCF_160MHz);
-Serial.begin(57600); // 115200 by default
+Serial.begin(9600); // 115200 by default
 
 Serial.println("************************");
 Serial.println("*6*** Init running ***8*");
@@ -636,10 +637,8 @@ debugf("spiffs disabled");
 #endif
    //ShowInfo();
 
-wifi_sid.add("Sintex");
 wifi_sid.add("AsusKZ");
-//wifi_sid.add("Sintex2");
-wifi_pass.add("sintex92");
+//wifi_sid.add("Sintex");
 wifi_pass.add("Doitman1");
 //wifi_pass.add("sintex92");
 WifiAccessPoint.enable(false);
