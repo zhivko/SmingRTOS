@@ -23,6 +23,7 @@ xTaskHandle  HardwareSerial::serialDelegateTask = NULL;
 HardwareSerial::HardwareSerial(const int reqUart)
 	: uart(reqUart)
 {
+	rxBuffer = new CircularBuffer<int, char, 256>;
 	resetCallback();
 	hardwareSerialObjects[reqUart] = this;
 	if (!serialDelegateQueue){
@@ -53,31 +54,47 @@ HardwareSerial::HardwareSerial(const int reqUart)
 HardwareSerial::~HardwareSerial()
 {
 	hardwareSerialObjects[uart] = NULL;
+	delete rxBuffer;
 }
 
 void HardwareSerial::begin(const uint32_t baud/* = 9600*/)
 {
-	UART_SetBaudrate(UART0,baud);
-    UART_intr_handler_register((void *) &uartReceiveInterruptHandler,NULL);
-    ETS_UART_INTR_ENABLE();
+	if (uart == 0)
+	{
+		UART_SetBaudrate(UART0,baud);
+		    UART_intr_handler_register((void *) &uartReceiveInterruptHandler,NULL);
+		    ETS_UART_INTR_ENABLE();
+	}
+	else
+	{
+	    UART_ConfigTypeDef uart_config;
+
+	    uart_config.data_bits     		= UART_WordLength_8b;
+	    uart_config.parity          	= USART_Parity_None;
+	    uart_config.stop_bits     		= USART_StopBits_1;
+	    uart_config.flow_ctrl      		= USART_HardwareFlowControl_None;
+	    uart_config.UART_RxFlowThresh 	= 120;
+	    uart_config.UART_InverseMask 	= UART_None_Inverse;
+
+	    uart_config.baud_rate    		= (UART_BautRate)baud;
+
+	    UART_ParamConfig(UART1, &uart_config);
+
+	}
+
 }
 
 size_t HardwareSerial::write(uint8_t oneChar)
 {
-	//if (oneChar == '\0') return 0;
 
-//	uart_tx_one_char(oneChar);
-//	LOCAL STATUS
- 	uart_tx_one_char(0, oneChar);
-//	uart0_write_char(oneChar);
-//	UART_ResetFifo(UART0);
+ 	uart_tx_one_char(uart, oneChar);
 
 	return 1;
 }
 
 int HardwareSerial::available()
 {
-	return rxBuffer.Len();
+	return rxBuffer->Len();
 }
 
 int HardwareSerial::read()
@@ -85,7 +102,7 @@ int HardwareSerial::read()
 	char rcvChar;
 
 	noInterrupts();
-	if (!rxBuffer.Pop(rcvChar))
+	if (!rxBuffer->Pop(rcvChar))
 	{
 		rcvChar = -1;
 	}
@@ -99,7 +116,7 @@ int HardwareSerial::readMemoryBlock(char* buf, int max_len)
 	int numChar = 0;
 	char tempChar;
 	noInterrupts();
-	while ((rxBuffer.Pop(tempChar)) && (max_len-- > 0)) {
+	while ((rxBuffer->Pop(tempChar)) && (max_len-- > 0)) {
 		*buf = tempChar;		// Read data from Buffer
 		numChar++;						// Increase counter of read bytes
 		buf++;						// Increase Buffer pointer
@@ -114,7 +131,7 @@ int HardwareSerial::peek()
 	char peekChar;
 
 	noInterrupts();
-	if (!rxBuffer.Peek(peekChar))
+	if (!rxBuffer->Peek(peekChar))
 	{
 		peekChar = -1;
 	}
@@ -195,7 +212,7 @@ void HardwareSerial::uartReceiveInterruptHandler(void *para)
         /* you can add your handle code below.*/
       if (Self->useRxBuff)
       {
-    	Self->rxBuffer.Push(RcvChar);
+    	Self->rxBuffer->Push(RcvChar);
       }
 
       if ((Self->HWSDelegate) || (Self->commandExecutor))
@@ -203,7 +220,7 @@ void HardwareSerial::uartReceiveInterruptHandler(void *para)
     	  SerialDelegateMessage serialDelegateMessage;
     	  serialDelegateMessage.uart = Self->uart;
     	  serialDelegateMessage.rcvChar = RcvChar;
-    	  serialDelegateMessage.charCount = Self->rxBuffer.Len();
+    	  serialDelegateMessage.charCount = Self->rxBuffer->Len();
 
           if (Self->HWSDelegate)
 		  {
