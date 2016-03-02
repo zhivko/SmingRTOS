@@ -137,22 +137,29 @@ MODULES      ?= app     # default to app if not set by user
 MODULES      += $(SMING_HOME)/rboot/appcode
 
 EXTRA_INCDIR ?= include # default to include if not set by user
-EXTRA_INCDIR += $(SMING_HOME)/include 
-EXTRA_INCDIR += $(SMING_HOME)/ 
+EXTRA_INCDIR += $(SMING_HOME)/include
+EXTRA_INCDIR += $(SMING_HOME)/sming/include
+EXTRA_INCDIR += $(SMING_HOME)/
 EXTRA_INCDIR += $(SMING_HOME)/rboot
 
-EXTRA_INCDIR += $(SDK_BASE)/include 
-EXTRA_INCDIR += $(SDK_BASE)/extra_include 
-EXTRA_INCDIR += $(SDK_BASE)/include/lwip 
-EXTRA_INCDIR += $(SDK_BASE)/include/espressif 
-EXTRA_INCDIR += $(SDK_BASE)/include/lwip/ipv4 
+EXTRA_INCDIR += $(SDK_BASE)/include
+EXTRA_INCDIR += $(SDK_BASE)/extra_include
+EXTRA_INCDIR += $(SDK_BASE)/include/lwip
+EXTRA_INCDIR += $(SDK_BASE)/include/espressif
+EXTRA_INCDIR += $(SDK_BASE)/include/lwip/ipv4
 EXTRA_INCDIR += $(SDK_BASE)/include/lwip/ipv6
 EXTRA_INCDIR += $(SDK_BASE)/include/freertos
 EXTRA_INCDIR += $(SDK_BASE)/include/espressif
 
 
 # compiler flags using during compilation of source files
-CFLAGS		= -Os -g -Wpointer-arith -Wundef -Werror -Wl,-EL -nostdlib -mlongcalls -mtext-section-literals -finline-functions -fdata-sections -ffunction-sections -D__ets__ -DICACHE_FLASH -DARDUINO=106 $(USER_CFLAGS)
+CFLAGS		= -Wpointer-arith -Wundef -Werror -Wl,-EL -nostdlib -mlongcalls -mtext-section-literals -finline-functions -fdata-sections -ffunction-sections -D__ets__ -DICACHE_FLASH -DARDUINO=106 $(USER_CFLAGS)
+ifeq ($(ENABLE_GDB), 1)
+	CFLAGS += -Og -ggdb -DGDBSTUB_FREERTOS=1 -DENABLE_GDB=1
+	EXTRA_INCDIR += $(SMING_HOME)/gdbstub
+else
+	CFLAGS += -Os -g
+endif
 CXXFLAGS	= $(CFLAGS) -fno-rtti -fno-exceptions -std=c++11 -felide-constructors -Wno-literal-suffix
 
 # libmain must be modified for rBoot big flash support (just one symbol gets weakened)
