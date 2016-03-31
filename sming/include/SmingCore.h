@@ -30,12 +30,15 @@
 #include "sming/core/Wire.h"
 #include "sming/core/SPISoft.h"
 #include "sming/core/SPI.h"
+#include "sming/core/QueuedDelegate.h"
+#include "sming/core/QueuedInterrupt.h"
 
 #include "sming/platform/System.h"
 #include "sming/platform/Station.h"
 #include "sming/platform/AccessPoint.h"
 #include "sming/platform/WifiEvents.h"
 
+#include "sming/network/DNSServer.h"
 #include "sming/network/HttpClient.h"
 #include "sming/network/MqttClient.h"
 #include "sming/network/NtpClient.h"
