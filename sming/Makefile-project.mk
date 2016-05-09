@@ -156,10 +156,10 @@ EXTRA_INCDIR += $(SDK_BASE)/include/espressif
 
 # libraries used in this project, mainly provided by the SDK
 USER_LIBDIR = $(SMING_HOME)/compiler/lib/
-LIBS		= microc gcc hal phy pp net80211 wpa crypto main freertos lwip minic pwm sming
+LIBS		= microc gcc hal phy pp net80211 wpa crypto main freertos lwip minic pwm smartconfig sming
 
 # compiler flags using during compilation of source files
-CFLAGS		= -Wpointer-arith -Wundef -Werror -Wl,-EL -nostdlib -mlongcalls -mtext-section-literals -finline-functions -fdata-sections -ffunction-sections -D__ets__ -DICACHE_FLASH -DARDUINO=106 $(USER_CFLAGS)
+CFLAGS		= -Os -g -Wpointer-arith -Wundef -Werror -Wl,-EL -nostdlib -mlongcalls -mtext-section-literals -finline-functions -fdata-sections -ffunction-sections -D__ets__ -DICACHE_FLASH -DARDUINO=106 -DCOM_SPEED_SERIAL=$(COM_SPEED_SERIAL) $(USER_CFLAGS)
 ifeq ($(ENABLE_GDB), 1)
 	CFLAGS += -Og -ggdb -DGDBSTUB_FREERTOS=1 -DENABLE_GDB=1
 	EXTRA_INCDIR += $(SMING_HOME)/gdbstub
@@ -358,6 +358,11 @@ ifeq ($(DISABLE_SPIFFS), 1)
 else
 	$(ESPTOOL) -p $(COM_PORT) -b $(COM_SPEED_ESPTOOL) write_flash $(flashimageoptions) 0x00000 $(FW_BASE)/0x00000.bin 0x0a000 $(FW_BASE)/0x0a000.bin $(SPIFF_START_OFFSET) $(SPIFF_BIN_OUT)
 endif
+	$(TERMINAL)
+
+terminal:
+	$(vecho) "Killing Terminal to free $(COM_PORT)"
+	-$(Q) $(KILL_TERM)
 	$(TERMINAL)
 
 flashinit:
