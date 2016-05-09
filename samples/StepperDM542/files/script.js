@@ -58,6 +58,7 @@
 	  function onOpen(evt)
 	  {
 		writeToScreen("CONNECTED");
+		writeToScreen('<span style="color: blue;">Time: ' + ((new Date()).getTime()-currentTimeMs) +'ms Received: ' + evt.data+'</span>');
 		//setInterval(function() {
 		//	doSend("GiveMeData");
 		//}, 150);	

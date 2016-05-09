@@ -1,7 +1,9 @@
 #include <user_config.h>
 #include "SmingCore.h"
 #include "SerialReadingDelegateDemo.h"
-#include "../sming/system/uart.h"
+//#include "../sming/system/uart.h"
+
+//#define DISABLE_SPIFFS true
 
 HardwareTimer hardwareTimer;
 
@@ -11,7 +13,14 @@ HardwareTimer hardwareTimer;
 #define WIFI_PWD "Enter_wifi_pwd"
 #endif
 
+// ltc2400 settings
+#define PIN_DO 5	/* Master In Slave Out */
+#define PIN_DI 4	/* Master Out Slave In */
+#define PIN_CK 15	/* Serial Clock */
+#define PIN_SS 12	/* Slave Select */
+
 int currWifiIndex = 0;
+SPISoft *Ltc2400Spi = NULL;
 
 Vector<String> wifi_sid;
 Vector<String> wifi_pass;
@@ -22,6 +31,7 @@ rBootHttpUpdate* airUpdater;
 float_t floatAnalog;
 long longAnalog;
 String analogResult;
+int cnt = 0;                  // counter
 
 HttpServer server;
 int totalActiveSockets = 0;
@@ -50,6 +60,70 @@ void incrementNextWifiIndex() {
 	currWifiIndex++;
 	if (currWifiIndex == (wifi_sid.size()))
 		currWifiIndex = 0;
+}
+
+void readFromLTC2400() {
+	float volt;
+	float v_ref = 4.096; // Reference Voltage, 5.0 Volt for LT1021 or 3.0 for LP2950-3, 4.096Vs for REF3040
+	long int ltw = 0;         // ADC Data ling int
+	BYTE sig;                 // sign bit flag
+	BYTE b0;                  //
+	char buf1[10];
+	char buf[60];
+
+	digitalWrite(PIN_SS, 0);
+	delayMicroseconds(1);
+	if (digitalRead(PIN_DO) == 0) {   // ADC Converter ready ?
+
+		ltw = 0;
+		sig = 0;
+
+		Ltc2400Spi->recv(&b0, 1);          // read 4 bytes adc raw data with SPI
+		if ((b0 & 0x20) == 0)
+			sig = 1;  // is input negative ?
+		b0 &= 0x1F;                   // discard bit 25..31
+		ltw |= b0;
+		ltw <<= 8;
+		Ltc2400Spi->recv(&b0, 1);
+		ltw |= b0;
+		ltw <<= 8;
+		Ltc2400Spi->recv(&b0, 1);
+		ltw |= b0;
+		ltw <<= 8;
+		Ltc2400Spi->recv(&b0, 1);
+		ltw |= b0;
+
+		delayMicroseconds(1);
+
+		digitalWrite(PIN_SS, HIGH);      // LTC2400 CS HIGH
+		delay(200);
+
+		if (sig)
+			ltw |= 0xf0000000;    // if input negative insert sign bit
+		ltw = ltw / 16;   // scale result down , last 4 bits have no information
+		volt = ltw * v_ref / 16777216; // max scale
+
+		//Serial.printf("%d",cnt++);
+		//Serial.printf(";  ");
+		dtostrf(volt, 6, 6, buf1);
+		//Serial.printf("%s",buf1);           // print voltage as floating number
+		//Serial.println("  ");
+
+		sprintf(buf, "Analogue: %s", buf1);
+		String message = String(buf);
+
+		if (!message.equals(lastPositionMessage)) {
+			WebSocketsList &clients = server.getActiveWebSockets();
+			for (int i = 0; i < clients.count(); i++) {
+				clients[i].sendString(message);
+			}
+			lastPositionMessage = message;
+		}
+
+	}
+	digitalWrite(PIN_SS, HIGH); // LTC2400 CS hi
+	delay(5);
+	reportTimer.startOnce();
 }
 
 void reportAnalogue() {
@@ -287,6 +361,9 @@ void parseGcode(String commandLine) {
 //server.enableWebSockets(false);
 		OtaUpdate();
 		return;
+	} else if (commandLine.equals("restart")) {
+		System.restart();
+		return;
 	} else if (commandLine.equals("pos")) {
 		reportStatus();
 		return;
@@ -479,15 +556,13 @@ void onFile(HttpRequest &request, HttpResponse &response) {
 void wsConnected(WebSocket& socket) {
 	totalActiveSockets++;
 	lastPositionMessage = "";
-// Notify everybody about new connection
-	/*
-	 WebSocketsList &clients = server.getActiveWebSockets();
-	 for (int i = 0; i < clients.count(); i++)
-	 {
-	 clients[i].sendString(
-	 "New friend arrived! Total: " + String(totalActiveSockets));
-	 }
-	 */
+	// Notify everybody about new connection
+
+	WebSocketsList &clients = server.getActiveWebSockets();
+	for (int i = 0; i < clients.count(); i++) {
+		clients[i].sendString(
+				"Connected to station: " + wifi_sid.get(currWifiIndex) + ", SDK version: " + system_get_sdk_version());
+	}
 
 }
 
@@ -579,7 +654,7 @@ void connectOk() {
 		Serial.begin(57600);
 		Serial.println("Distance sensor");
 		deltat = 100000;
-	    system_uart_swap();
+		system_uart_swap();
 		delegateDemoClass.begin();
 		reportTimer.initializeMs(100, reportAnalogue).start();
 	} else if (ipString.equals("192.168.1.111")
@@ -597,6 +672,10 @@ void connectOk() {
 		hardwareTimer.initializeUs(deltat, StepperTimerInt);
 		hardwareTimer.startOnce();
 		initPins();
+	} else if (ipString.equals("192.168.1.116")) {
+		Ltc2400Spi = new SPISoft(PIN_DO, PIN_DI, PIN_CK, PIN_SS);
+		Ltc2400Spi->begin();
+		reportTimer.initializeMs(300, readFromLTC2400).startOnce();
 	}
 }
 
@@ -614,12 +693,14 @@ void init() {
 	Serial.begin(115200);
 	WifiStation.enable(false);
 	System.setCpuFrequency(eCF_160MHz);
-	Serial.systemDebugOutput(true);
+	//Serial.systemDebugOutput(true);
 	Serial.println("************************");
 	Serial.println("***** Init running *****");
 	Serial.println("************************");
 
 // mount spiffs
+
+
 	int slot = rboot_get_current_rom();
 #ifndef DISABLE_SPIFFS
 	if (slot == 0) {
@@ -642,6 +723,8 @@ void init() {
 #else
 	debugf("spiffs disabled");
 #endif
+
+
 	ShowInfo();
 
 	wifi_sid.add("AsusKZ");
@@ -651,9 +734,10 @@ void init() {
 	WifiStation.config(wifi_sid.get(currWifiIndex),
 			wifi_pass.get(currWifiIndex), false);
 	WifiAccessPoint.enable(false);
+	Serial.println("1");
 	WifiStation.enable(true);
+	Serial.println("2");
 	WifiStation.waitConnection(connectOk, 20, connectNotOk);
-
 
 }
 
