@@ -154,12 +154,6 @@ EXTRA_INCDIR += $(SDK_BASE)/include/espressif
 
 # compiler flags using during compilation of source files
 CFLAGS		= -Os -g -Wpointer-arith -Wundef -Werror -Wl,-EL -nostdlib -mlongcalls -mtext-section-literals -finline-functions -fdata-sections -ffunction-sections -D__ets__ -DICACHE_FLASH -DARDUINO=106 -DCOM_SPEED_SERIAL=$(COM_SPEED_SERIAL) $(USER_CFLAGS)
-ifeq ($(ENABLE_GDB), 1)
-	CFLAGS += -Og -ggdb -DGDBSTUB_FREERTOS=1 -DENABLE_GDB=1
-	EXTRA_INCDIR += $(SMING_HOME)/gdbstub
-else
-	CFLAGS += -Os -g
-endif
 CXXFLAGS	= $(CFLAGS) -fno-rtti -fno-exceptions -std=c++11 -felide-constructors -Wno-literal-suffix
 
 # libmain must be modified for rBoot big flash support (just one symbol gets weakened)
