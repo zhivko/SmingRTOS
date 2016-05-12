@@ -86,6 +86,10 @@
 		{
 			document.getElementById('Analogue').textContent = res[1];
 		}
+		else if(evt.data.slice(0,7) == 'Encoder')
+		{
+			document.getElementById('Encoder').textContent = res[1];
+		}
 	  }
 	  function onError(evt)
 	  {

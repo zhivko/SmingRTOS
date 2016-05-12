@@ -36,6 +36,8 @@
 ## SPIFFS options
 # DISABLE_SPIFFS = 1
 SPIFF_FILES = files
+RBOOT_SPIFFS_0   = 0x100000
+RBOOT_SPIFFS_1   = 0x300000
 
 #### overridable rBoot options ####
 ## use rboot build mode
