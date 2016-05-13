@@ -192,7 +192,7 @@ void reportEncoderPosition() {
 		lastPositionMessage = message;
 	}
 
-	//pb::Container* cont = pb::Container().New();
+	pb::Container cont = pb::Container();
 
 
 }

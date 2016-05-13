@@ -15,7 +15,7 @@
 #define NOT_ON_TIMER 0
 
 #define PA 1
-#define PB 2
+// #define PB 2
 #define PC 3
 
 #define GPIO_REG_TYPE uint8_t
