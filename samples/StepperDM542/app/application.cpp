@@ -1,7 +1,7 @@
 #include "SerialReadingDelegateDemo.h"
 #include <user_config.h>
 #include <SmingCore.h>
-#include "../machinekitProtobuf/message.pb.h"
+#include "machinekitProtobuf/message.pb.h"
 
 //#include "../sming/system/uart.h"
 
