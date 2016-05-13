@@ -1,7 +1,7 @@
 #include "SerialReadingDelegateDemo.h"
 #include <user_config.h>
 #include <SmingCore.h>
-#include "machinetalk/protobuf/message.pb.h"
+#include <machinetalk/protobuf/message.pb.h>
 
 //#include "../sming/system/uart.h"
 
@@ -192,10 +192,9 @@ void reportEncoderPosition() {
 		lastPositionMessage = message;
 	}
 
-	pb::Container* cont = pb::Container().New();
+	//pb::Container* cont = pb::Container().New();
 
 
-	//pb.Message.Container.Builder builder = Container.newBuilder();
 }
 
 void sendToClients(String message) {
