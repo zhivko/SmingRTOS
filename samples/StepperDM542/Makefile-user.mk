@@ -3,8 +3,16 @@
 ## Uncomment and change examples:
 
 ## Add your source directories here separated by space
-# MODULES = app
-# EXTRA_INCDIR = include
+MODULES = app
+MODULES ?= google
+MODULES ?= machineProtobuf
+
+#EXTRA_INCDIR += /home/kz/git/SmingRTOS/samples/StepperDM542/google
+#EXTRA_INCDIR += /home/kz/git/SmingRTOS/samples/StepperDM542/machineProtobuf
+#EXTRA_INCDIR += /home/kz/git/SmingRTOS/samples/StepperDM542/include
+
+
+VERBOSE = 1
 
 ## ESP_HOME sets the path where ESP tools and SDK are located.
 ## Windows:
