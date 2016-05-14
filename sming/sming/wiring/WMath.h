@@ -19,6 +19,7 @@
 #define WMATH_H
 
 #include "WiringFrameworkIncludes.h"
+using namespace std;
 
 long random(long);
 long random(long, long);

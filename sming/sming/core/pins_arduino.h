@@ -6,7 +6,6 @@
  ****/
 
 // File name selected for compatibility
-
 #ifndef WIRING_PINS_ARDUINO_H_
 #define WIRING_PINS_ARDUINO_H_
 
@@ -15,7 +14,7 @@
 #define NOT_ON_TIMER 0
 
 #define PA 1
-// #define PB 2
+#define PB 2
 #define PC 3
 
 #define GPIO_REG_TYPE uint8_t
@@ -35,6 +34,5 @@
 #define portOutputRegister(P) ( ((volatile uint8_t*)(P != PC ? STD_GPIO_OUT : RTC_GPIO_OUT)) + ( ( ((int)P) == PB ) ? 1 : 0) )
 #define portInputRegister(P)  ( ((volatile uint8_t*)(P != PC ? STD_GPIO_IN : RTC_GPIO_IN_DATA)) + ( ( ((int)P) == PB ) ? 1 : 0) )
 #define portModeRegister(P)	  ( ((volatile uint8_t*)(P != PC ? STD_GPIO_ENABLE : RTC_GPIO_ENABLE)) + ( ( ((int)P) == PB ) ? 1 : 0) ) // Stored bits: 0=In, 1=Out
-
 
 #endif /* WIRING_PINS_ARDUINO_H_ */

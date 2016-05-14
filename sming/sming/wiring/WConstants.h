@@ -57,7 +57,7 @@
 //#define false    0x0
 //#define TRUE     0x1
 //#define FALSE    0x0
-//#define null     NULL
+#define null     NULL
 
 #define DEC      10
 #define HEX      16

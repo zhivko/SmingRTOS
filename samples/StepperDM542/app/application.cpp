@@ -1,7 +1,9 @@
-#include "SerialReadingDelegateDemo.h"
+//#include "SerialReadingDelegateDemo.h"
 #include <user_config.h>
 #include <SmingCore.h>
 #include <machinetalk/protobuf/message.pb.h>
+#include <machinetalk/protobuf/types.pb.h>
+#include <google/protobuf/text_format.h>
 
 //#include "../sming/system/uart.h"
 
@@ -56,8 +58,7 @@ uint8_t y = 1;
 uint8_t z = 2;
 uint8_t e = 3;
 
-//HardwareSerial serial1 = HardwareSerial(UART_ID_1);
-SerialReadingDelegateDemo delegateDemoClass;
+//SerialReadingDelegateDemo delegateDemoClass;
 
 int8_t encoder0PinA = 5;
 int8_t encoder0PinB = 4;
@@ -182,17 +183,39 @@ void reportEncoderPosition() {
 	floatEncoder = encoder0Pos * (2.4/160.0);
 	dtostrf(floatEncoder, 4, 2, buf1);
 	sprintf(buf, "Encoder: %s", deblank(buf1));
-	String message = String(buf);
+	String message1 = String(buf);
 
-	if (!message.equals(lastPositionMessage)) {
+	if (!message1.equals(lastPositionMessage)) {
 		WebSocketsList &clients = server.getActiveWebSockets();
 		for (int i = 0; i < clients.count(); i++) {
-			clients[i].sendString(message);
+			clients[i].sendString(message1);
 		}
-		lastPositionMessage = message;
+		lastPositionMessage = message1;
 	}
 
-	pb::Container cont = pb::Container();
+    pb::Container container, got;
+
+/*
+    pb::Pin *pin;
+    pb::Value *value;
+
+    // type-tag the container:
+    container.set_type(pb::ContainerType::MT_HALUPDATE);
+    container.set_serial(56789);
+    container.set_rsvp(pb::ReplyType::NONE);
+
+
+    // add repeated submessage(s)
+    pin = container.add_pin();
+    pin->set_type(pb::ValueType::HAL_S32);
+    pin->set_name("foo.1.bar");
+    pin->set_hals32(4711);
+
+    value = container.add_value();
+    value->set_type(pb::ValueType::DOUBLE);
+    value->set_v_double(3.14159);
+*/
+    //std::string json = pb2json(container);
 
 
 }
@@ -744,7 +767,7 @@ void connectOk() {
 		Serial.begin(57600);
 		deltat = 100000;
 		system_uart_swap();
-		delegateDemoClass.begin();
+		//delegateDemoClass.begin();
 		reportTimer.initializeMs(100, reportAnalogue).start();
 	} else if (ipString.equals("192.168.1.111")
 			|| ipString.equals("192.168.1.112")) {
@@ -836,7 +859,7 @@ void init() {
 	wifi_pass.add("Doitman1");
 	wifi_pass.add("sintex92");
 	WifiStation.config(wifi_sid.get(currWifiIndex),
-			wifi_pass.get(currWifiIndex), true);
+	wifi_pass.get(currWifiIndex), true);
 	WifiAccessPoint.enable(false);
 	WifiStation.enable(true);
 	WifiStation.waitConnection(connectOk, 18, connectNotOk);
