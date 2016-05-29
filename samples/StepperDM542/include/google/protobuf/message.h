@@ -842,22 +842,22 @@ inline RepeatedPtrField<Message>* Reflection::MutableRepeatedPtrField(
           NULL));
 }
 
-template<typename PB>
-inline const RepeatedPtrField<PB>& Reflection::GetRepeatedPtrField(
+template<typename PB1>
+inline const RepeatedPtrField<PB1>& Reflection::GetRepeatedPtrField(
     const Message& message, const FieldDescriptor* field) const {
-  return *static_cast<RepeatedPtrField<PB>* >(
+  return *static_cast<RepeatedPtrField<PB1>* >(
       MutableRawRepeatedField(const_cast<Message*>(&message), field,
           FieldDescriptor::CPPTYPE_MESSAGE, -1,
-          PB::default_instance().GetDescriptor()));
+          PB1::default_instance().GetDescriptor()));
 }
 
-template<typename PB>
-inline RepeatedPtrField<PB>* Reflection::MutableRepeatedPtrField(
+template<typename PB1>
+inline RepeatedPtrField<PB1>* Reflection::MutableRepeatedPtrField(
     Message* message, const FieldDescriptor* field) const {
-  return static_cast<RepeatedPtrField<PB>* >(
+  return static_cast<RepeatedPtrField<PB1>* >(
       MutableRawRepeatedField(message, field,
           FieldDescriptor::CPPTYPE_MESSAGE, -1,
-          PB::default_instance().GetDescriptor()));
+          PB1::default_instance().GetDescriptor()));
 }
 
 }  // namespace protobuf
