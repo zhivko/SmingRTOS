@@ -2,6 +2,11 @@
 ## Parameters configured here will override default and ENV values.
 ## Uncomment and change examples:
 
+EXTRA_INCDIR = include
+EXTRA_INCDIR += /home/kz/git/SmingRTOS/samples/StepperDM542/include/machinetalk/generated
+EXTRA_INCDIR += /home/kz/git/SmingRTOS/samples/StepperDM542/include/machinetalk/nanopb
+EXTRA_INCDIR += /home/kz/git/SmingRTOS/samples/StepperDM542/include/machinetalk/google
+
 ## Add your source directories here separated by space
 #MODULES = app
 

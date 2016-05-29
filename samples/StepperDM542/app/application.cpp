@@ -2,20 +2,7 @@
 #include <user_config.h>
 #include <SmingCore.h>
 
-#include <machinetalk/generated/message.npb.h>
-#include <machinetalk/generated/types.npb.h>
-#include <machinetalk/generated/object.npb.h>
-#include <machinetalk/generated/log.npb.h>
-#include <machinetalk/generated/motcmds.npb.h>
-#include <machinetalk/generated/task.npb.h>
-#include <machinetalk/generated/canon.npb.h>
-#include <machinetalk/generated/value.npb.h>
-#include <machinetalk/generated/rtapicommand.npb.h>
-#include <machinetalk/generated/rtapi_message.npb.h>
-#include <machinetalk/generated/config.npb.h>
-#include <machinetalk/generated/preview.npb.h>
-#include <machinetalk/generated/status.npb.h>
-
+#include <message.pb.h>
 
 
 //#include "../sming/system/uart.h"
@@ -208,17 +195,17 @@ void reportEncoderPosition() {
 		lastPositionMessage = message1;
 	}
 
+/*
 	pb_Pin pin;
-
 	pb_Container container;
 	container.type = pb_ContainerType_MT_HALUPDATE;
 	container.serial = 56789;
 	container.rsvp = pb_ReplyType_NONE;
-	container.pins.pin = pin;
+	container.pin =
+*/
 
+	pb::Container container;
 
-	pb_Value value;
-/*
     pb::Pin *pin;
     pb::Value *value;
 
