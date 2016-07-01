@@ -1,10 +1,14 @@
 //#include "SerialReadingDelegateDemo.h"
 #include <user_config.h>
 #include <SmingCore.h>
+
+#include "zmtp_classes.h"
+
+/*
 #include <machinetalk/protobuf/message.pb.h>
 #include <machinetalk/protobuf/types.pb.h>
 #include <google/protobuf/text_format.h>
-
+*/
 //#include "../sming/system/uart.h"
 
 //#define DISABLE_SPIFFS true
@@ -50,8 +54,8 @@ bool steppersOn = false;
 
 rBootHttpUpdate* otaUpdater;
 
-String ROM_0_URL = "http://192.168.1.24/firmwareRtos/rom0.bin";
-String SPIFFS_URL = "http://192.168.1.24/firmwareRtos/spiff_rom.bin";
+String ROM_0_URL = "http://192.168.1.19/firmwareRtos/rom0.bin";
+String SPIFFS_URL = "http://192.168.1.19/firmwareRtos/spiff_rom.bin";
 
 uint8_t x = 0;
 uint8_t y = 1;
@@ -176,6 +180,7 @@ void reportAnalogue() {
 	}
 }
 
+
 void reportEncoderPosition() {
 	char buf[60];
 	char buf1[12];
@@ -193,9 +198,16 @@ void reportEncoderPosition() {
 		lastPositionMessage = message1;
 	}
 
-    pb::Container container, got;
+
+    zmtp_msg_test (false);
+    zmtp_channel_test (false);
 
 /*
+
+
+    pb::Container container, got;
+
+
     pb::Pin *pin;
     pb::Value *value;
 
@@ -214,11 +226,12 @@ void reportEncoderPosition() {
     value = container.add_value();
     value->set_type(pb::ValueType::DOUBLE);
     value->set_v_double(3.14159);
-*/
-    //std::string json = pb2json(container);
 
+    //std::string json = pb2json(container);
+*/
 
 }
+
 
 void sendToClients(String message) {
 	WebSocketsList &clients = server.getActiveWebSockets();
