@@ -28,6 +28,10 @@
 #define ZMTP_VERSION \
     ZMTP_MAKE_VERSION(ZMTP_VERSION_MAJOR, ZMTP_VERSION_MINOR, ZMTP_VERSION_PATCH)
 
+
+#define _ZMALLOC_PEDANTIC 1
+#define _ZMALLOC_DEBUG 1
+
 //  Public API classes
 
 #include "zmtp_msg.h"

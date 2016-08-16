@@ -2,17 +2,15 @@
 #include <user_config.h>
 #include <SmingCore.h>
 
-#include "zmtp_classes.h"
+//#include "zmtp_classes.h"
 
 /*
-#include <machinetalk/protobuf/message.pb.h>
-#include <machinetalk/protobuf/types.pb.h>
-#include <google/protobuf/text_format.h>
-*/
+ #include <machinetalk/protobuf/message.pb.h>
+ #include <machinetalk/protobuf/types.pb.h>
+ #include <google/protobuf/text_format.h>
+ */
 //#include "../sming/system/uart.h"
-
 //#define DISABLE_SPIFFS true
-
 HardwareTimer hardwareTimer;
 
 // If you want, you can define WiFi settings globally in Eclipse Environment Variables
@@ -66,21 +64,20 @@ uint8_t e = 3;
 
 int8_t encoder0PinA = 5;
 int8_t encoder0PinB = 4;
-long encoder0Pos=0;
+long encoder0Pos = 0;
 
-char* deblank(char* input)                                                  /* deblank accepts a char[] argument and returns a char[] */
+char* deblank(char* input) /* deblank accepts a char[] argument and returns a char[] */
 {
-    char *output=input;
-    for (int i = 0, j = 0; i<strlen(input); i++,j++)                        /* Evaluate each character in the input */
-    {
-        if (input[i]!=' ')                                                  /* If the character is not a space */
-            output[j]=input[i];                                             /* Copy that character to the output char[] */
-        else
-            j--;                                                            /* If it is a space then do not increment the output index (j), the next non-space will be entered at the current index */
-    }
-    return output;                                                          /* Return output char[]. Should have no spaces*/
+	char *output = input;
+	for (int i = 0, j = 0; i < strlen(input); i++, j++) /* Evaluate each character in the input */
+	{
+		if (input[i] != ' ') /* If the character is not a space */
+			output[j] = input[i]; /* Copy that character to the output char[] */
+		else
+			j--; /* If it is a space then do not increment the output index (j), the next non-space will be entered at the current index */
+	}
+	return output; /* Return output char[]. Should have no spaces*/
 }
-
 
 void incrementNextWifiIndex() {
 	currWifiIndex++;
@@ -180,12 +177,11 @@ void reportAnalogue() {
 	}
 }
 
-
 void reportEncoderPosition() {
 	char buf[60];
 	char buf1[12];
 
-	floatEncoder = encoder0Pos * (2.4/160.0);
+	floatEncoder = encoder0Pos * (2.4 / 160.0);
 	dtostrf(floatEncoder, 4, 2, buf1);
 	sprintf(buf, "Encoder: %s", deblank(buf1));
 	String message1 = String(buf);
@@ -198,40 +194,38 @@ void reportEncoderPosition() {
 		lastPositionMessage = message1;
 	}
 
+	//zmtp_msg_test (false);
+	//zmtp_channel_test (false);
 
-    zmtp_msg_test (false);
-    zmtp_channel_test (false);
-
-/*
-
-
-    pb::Container container, got;
+	/*
 
 
-    pb::Pin *pin;
-    pb::Value *value;
-
-    // type-tag the container:
-    container.set_type(pb::ContainerType::MT_HALUPDATE);
-    container.set_serial(56789);
-    container.set_rsvp(pb::ReplyType::NONE);
+	 pb::Container container, got;
 
 
-    // add repeated submessage(s)
-    pin = container.add_pin();
-    pin->set_type(pb::ValueType::HAL_S32);
-    pin->set_name("foo.1.bar");
-    pin->set_hals32(4711);
+	 pb::Pin *pin;
+	 pb::Value *value;
 
-    value = container.add_value();
-    value->set_type(pb::ValueType::DOUBLE);
-    value->set_v_double(3.14159);
+	 // type-tag the container:
+	 container.set_type(pb::ContainerType::MT_HALUPDATE);
+	 container.set_serial(56789);
+	 container.set_rsvp(pb::ReplyType::NONE);
 
-    //std::string json = pb2json(container);
-*/
+
+	 // add repeated submessage(s)
+	 pin = container.add_pin();
+	 pin->set_type(pb::ValueType::HAL_S32);
+	 pin->set_name("foo.1.bar");
+	 pin->set_hals32(4711);
+
+	 value = container.add_value();
+	 value->set_type(pb::ValueType::DOUBLE);
+	 value->set_v_double(3.14159);
+
+	 //std::string json = pb2json(container);
+	 */
 
 }
-
 
 void sendToClients(String message) {
 	WebSocketsList &clients = server.getActiveWebSockets();
@@ -521,7 +515,6 @@ void parseGcode(String commandLine) {
 	}
 }
 
-
 void serialCallBack(Stream& stream, char arrivedChar,
 		unsigned short availableCharsCount) {
 	int ia = (int) arrivedChar;
@@ -611,7 +604,6 @@ void serialCallBack(Stream& stream, char arrivedChar,
 //procTimer.initializeUs(deltat, blink1).start(true);
 	}
 }
-
 
 void onIndex(HttpRequest &request, HttpResponse &response) {
 	TemplateFileStream *tmpl = new TemplateFileStream("index.html");
@@ -816,7 +808,6 @@ void connectOk() {
 	}
 }
 
-
 void connectNotOk() {
 
 	WifiStation.enable(false);
@@ -827,7 +818,6 @@ void connectNotOk() {
 	WifiStation.waitConnection(connectOk, 12, connectNotOk);
 
 }
-
 
 void init() {
 //ets_wdt_disable();
@@ -872,7 +862,7 @@ void init() {
 	wifi_pass.add("Doitman1");
 	wifi_pass.add("sintex92");
 	WifiStation.config(wifi_sid.get(currWifiIndex),
-	wifi_pass.get(currWifiIndex), true);
+			wifi_pass.get(currWifiIndex), true);
 	WifiAccessPoint.enable(false);
 	WifiStation.enable(true);
 	WifiStation.waitConnection(connectOk, 18, connectNotOk);

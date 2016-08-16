@@ -363,7 +363,7 @@
 #    error "Cannot compile: must change definition of 'dbyte'."
 #endif
 #if (UINT_MAX != 0xFFFFFFFFU)
-#    error "Cannot compile: must change definition of 'qbyte'."
+#    error "Cannot compile: must change truedefinition of 'qbyte'."
 #endif
 
 //- Data types --------------------------------------------------------------
@@ -486,12 +486,12 @@ static inline void *
 #   endif
 #endif
 //  Lets us write code that compiles both on Windows and normal platforms
-#if !defined (__WINDOWS__)
-typedef int SOCKET;
-#   define closesocket close
-#   define INVALID_SOCKET -1
-#   define SOCKET_ERROR -1
-#endif
+//#if !defined (__WINDOWS__)
+//typedef int SOCKET;
+//#   define closesocket close
+//#   define INVALID_SOCKET -1
+//#   define SOCKET_ERROR -1
+//#endif
 
 //- DLL exports -------------------------------------------------------------
 

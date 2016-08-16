@@ -4,6 +4,4 @@
 // In this file you can define Sming Runtime parameters
 // For possible options see : ....
 
-#define _ZMALLOC_PEDANTIC 1
-
 #endif

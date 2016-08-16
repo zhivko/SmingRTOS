@@ -11,6 +11,9 @@
 */
 
 #include "zmtp_classes.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/queue.h"
 
 //  ZMTP greeting (64 bytes)
 
@@ -37,6 +40,30 @@ static int
 static int
     s_tcp_recv (int fd, void *buffer, size_t len);
 
+
+int ICACHE_FLASH_ATTR mqtt_esp_read(int my_socket, unsigned char* buffer, int len, int timeout_ms)
+{
+    struct timeval tv;
+    fd_set fdset;
+    int rc = 0;
+    int rcvd = 0;
+    FD_ZERO(&fdset);
+    FD_SET(my_socket, &fdset);
+    // It seems esp_iot_rtos_sdk interprets timeout by FreeRTOS ticks.
+    tv.tv_sec = timeout_ms / portTICK_RATE_MS;
+    tv.tv_usec = 0;
+    rc = select(my_socket + 1, &fdset, 0, 0, &tv);
+    if ((rc > 0) && (FD_ISSET(my_socket, &fdset)))
+    {
+        rcvd = recv(my_socket, buffer, len, 0);
+    }
+    else
+    {
+        // select fail
+        return -1;
+    }
+    return rcvd;
+}
 
 //  --------------------------------------------------------------------------
 //  Constructor
@@ -425,7 +452,7 @@ s_tcp_recv (int fd, void *buffer, size_t len)
     return 0;
 }
 
-#include <poll.h>
+//#include <poll.h>
 
 //  Simple TCP echo server. It listens on a TCP port and after
 //  accepting a new connection, echoes all received data.
@@ -435,8 +462,8 @@ struct echo_serv_t {
     unsigned short port;
 };
 
-static void *
-s_echo_serv (void *arg)
+//static void * s_echo_serv (void *arg)
+LOCAL void s_echo_serv(void *arg)
 {
     struct echo_serv_t *params = (struct echo_serv_t *) arg;
 
@@ -476,10 +503,13 @@ s_echo_serv (void *arg)
     
     //  Echo all received data
     while (1) {
-        struct pollfd pollfd;
-        pollfd.fd = fd;
-        pollfd.events = POLLIN;
-        rc = poll (&pollfd, 1, -1);
+        //struct pollfd pollfd;
+        //pollfd.fd = fd;
+        //pollfd.events = POLLIN;
+        //rc = poll (&pollfd, 1, -1);
+
+    	rc = mqtt_esp_read ( s, buf , 1 , 100);
+
         assert (rc == 1);
         rc = read (fd, buf, sizeof buf);
         if (rc == 0)
@@ -492,7 +522,8 @@ s_echo_serv (void *arg)
     }
     close (fd);
     close (s);
-    return NULL;
+    vTaskDelete(NULL);
+    //return NULL;
 }
 
 struct script_line {
@@ -506,8 +537,8 @@ struct test_server_t {
     const struct script_line *script;
 };
 
-static void *
-s_test_server (void *arg)
+//static void * s_test_server (void *arg)
+LOCAL void s_test_serv(void *arg)
 {
     struct test_server_t *params = (struct test_server_t *) arg;
 
@@ -554,22 +585,39 @@ s_test_server (void *arg)
 
     close (fd);
     close (s);
-    return NULL;
+    vTaskDelete(NULL);
+    //return NULL;
 }
 
 //  --------------------------------------------------------------------------
 //  Selftest
+
+/*
+LOCAL void mythread(void *pvParameters)
+{
+	struct echo_serv_t *params = (struct echo_serv_t *) pvParameters;
+
+
+	vTaskDelete(NULL);
+	printf("delete the websocket_task\n");
+}
+*/
 
 void
 zmtp_channel_test (bool verbose)
 {
     printf (" * zmtp_channel: ");
     //  @selftest
-    pthread_t thread;
+    // pthread_t thread;
+
 
     struct echo_serv_t echo_serv_params = { .port = 22001 };
-    pthread_create (&thread, NULL, s_echo_serv, &echo_serv_params);
-    sleep (1);
+    //pthread_create (&thread, NULL, s_echo_serv, &echo_serv_params);
+    xTaskCreate(s_echo_serv, "myEchoServThread", 512, &echo_serv_params, 4, NULL);
+
+    //sleep (1);
+    vTaskDelay(10);
+
     zmtp_channel_t *channel = zmtp_channel_new ();
     assert (channel);
     int rc = zmtp_channel_tcp_connect (channel, "127.0.0.1", 22001);
@@ -597,7 +645,7 @@ zmtp_channel_test (bool verbose)
         zmtp_msg_destroy (&msg2);
     }
     zmtp_channel_destroy (&channel);
-    pthread_join (thread, NULL);
+    //pthread_join (thread, NULL);
 
     //  Test flow, initial handshake, receive "ping 1" and "ping 2" messages,
     //  then send "pong 1" and "ping 2"
@@ -623,8 +671,13 @@ zmtp_channel_test (bool verbose)
         .port = 22000,
         .script = script,
     };
-    pthread_create (&thread, NULL, s_test_server, &params);
-    sleep (1);
+
+    //pthread_create (&thread, NULL, s_test_server, &params);
+    xTaskCreate(s_test_serv, "myTestServThread", 512, &params, 4, NULL);
+    //xTaskCreate(s_echo_serv, "myEchoServThread", 512, &params, 4, NULL);
+
+    //sleep (1);
+    vTaskDelay(10);
 
     channel = zmtp_channel_new ();
     assert (channel);
@@ -662,8 +715,11 @@ zmtp_channel_test (bool verbose)
     zmtp_msg_destroy (&pong_2);
 
     zmtp_channel_destroy (&channel);
-    pthread_join (thread, NULL);
+    //pthread_join (thread, NULL);
 
     //  @end
     printf ("OK\n");
 }
+
+
+

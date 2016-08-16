@@ -17,6 +17,10 @@
 #include <espressif/c_types.h>
 typedef unsigned char byte;
 
+#include <lwip/lwip/sockets.h>
+#include <portmacro.h>
+#include <FreeRTOSConfig.h>
+
 
 //  External API
 #include "../include/zmtp.h"

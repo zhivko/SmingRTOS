@@ -87,8 +87,6 @@ else ifeq ($(SPI_SPEED), 80)
 	E2_OPTS += -80
 endif
 
-RBOOT_EXTRA_INCDIR := $(addprefix -I,$(RBOOT_EXTRA_INCDIR))
-
 .SECONDARY:
 
 #all: $(RBOOT_BUILD_BASE) $(RBOOT_FW_BASE) $(RBOOT_FW_BASE)/rboot.bin $(RBOOT_FW_BASE)/testload1.bin $(RBOOT_FW_BASE)/testload2.bin
