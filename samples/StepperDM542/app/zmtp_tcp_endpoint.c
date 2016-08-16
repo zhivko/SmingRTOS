@@ -11,6 +11,7 @@
 */
 
 #include "zmtp_classes.h"
+#include <lwip/lwip/sockets.h>
 
 struct zmtp_tcp_endpoint {
     zmtp_endpoint_t base;
@@ -28,9 +29,9 @@ zmtp_tcp_endpoint_new (const char *ip_addr, unsigned short port)
 
     //  Initialize base class
     self->base = (zmtp_endpoint_t) {
-        .connect = (int (*) (zmtp_endpoint_t *)) zmtp_tcp_endpoint_connect,
-        .listen = (int (*) (zmtp_endpoint_t *)) zmtp_tcp_endpoint_listen,
-        .destroy = (void (*) (zmtp_endpoint_t **)) zmtp_tcp_endpoint_destroy,
+        .connect_ = (int (*) (zmtp_endpoint_t *)) zmtp_tcp_endpoint_connect,
+        .listen_ = (int (*) (zmtp_endpoint_t *)) zmtp_tcp_endpoint_listen,
+        .destroy_ = (void (*) (zmtp_endpoint_t **)) zmtp_tcp_endpoint_destroy,
     };
 
     //  Resolve address

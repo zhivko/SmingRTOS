@@ -22,8 +22,8 @@ zmtp_endpoint_destroy (zmtp_endpoint_t **self_p)
     assert (self_p);
     if (*self_p) {
         zmtp_endpoint_t *self = *self_p;
-        assert (self->destroy);
-        self->destroy (self_p);
+        assert (self->destroy_);
+        self->destroy_ (self_p);
     }
 }
 
@@ -35,9 +35,9 @@ int
 zmtp_endpoint_connect (zmtp_endpoint_t *self)
 {
     assert (self);
-    assert (self->connect);
+    assert (self->connect_);
 
-    return self->connect (self);
+    return self->connect_ (self);
 }
 
 
@@ -48,7 +48,7 @@ int
 zmtp_endpoint_listen (zmtp_endpoint_t *self)
 {
     assert (self);
-    assert (self->listen);
+    assert (self->listen_);
 
-    return self->listen (self);
+    return self->listen_ (self);
 }

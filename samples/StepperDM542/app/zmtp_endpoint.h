@@ -18,9 +18,9 @@ extern "C" {
 #endif
 
 struct zmtp_endpoint {
-    void (*destroy) (struct zmtp_endpoint **self_p);
-    int (*connect) (struct zmtp_endpoint *self);
-    int (*listen) (struct zmtp_endpoint *self);
+    void (*destroy_) (struct zmtp_endpoint **self_p);
+    int (*connect_) (struct zmtp_endpoint *self);
+    int (*listen_) (struct zmtp_endpoint *self);
 };
 
 typedef struct zmtp_endpoint zmtp_endpoint_t;
