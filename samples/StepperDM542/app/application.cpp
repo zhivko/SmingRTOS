@@ -2,6 +2,8 @@
 #include <user_config.h>
 #include <SmingCore.h>
 
+//#include "contiki-zmtp/zmtp_msg.h"
+
 //#include "zmtp_classes.h"
 
 /*
@@ -194,6 +196,11 @@ void reportEncoderPosition() {
 		lastPositionMessage = message1;
 	}
 
+	//printf(" * zmtp_msg: ");
+	//zmtp_msg_t *msg = zmtp_msg_from_const_data(0, "hello", 6);
+	//zmtp_msg_destroy(&msg);
+
+
 	//zmtp_msg_test (false);
 	//zmtp_channel_test (false);
 
@@ -377,13 +384,13 @@ void Switch() {
 
 void OtaUpdate() {
 
+	Serial.println("Updating...");
+	sendToClients("Firmware ota update started...");
+
 	hardwareTimer.stop();
 
 	uint8 slot;
 	rboot_config bootconf;
-
-	Serial.println("Updating...");
-	sendToClients("Firmware ota update started...");
 
 	// need a clean object, otherwise if run before and failed will not run again
 	if (otaUpdater)
@@ -430,7 +437,7 @@ void OtaUpdate() {
 
 void parseGcode(String commandLine) {
 	if (commandLine.equals("ota")) {
-//server.enableWebSockets(false);
+		//server.enableWebSockets(false);
 		OtaUpdate();
 		return;
 	} else if (commandLine.equals("restart")) {
@@ -855,12 +862,17 @@ void init() {
 #endif
 
 	ShowInfo();
-	//wifi_set_opmode(STATION_MODE);
+	wifi_set_opmode(STATION_MODE);
 
-	wifi_sid.add("AsusKZ");
+	//wifi_sid.add("linksys");
 	wifi_sid.add("Sintex");
-	wifi_pass.add("Doitman1");
+	wifi_sid.add("AsusKZ");
+	//wifi_pass.add("Doitman1");
 	wifi_pass.add("sintex92");
+	wifi_pass.add("Doitman1");
+
+
+	debugf("trying to connect to: %s", wifi_sid.get(currWifiIndex).c_str());
 	WifiStation.config(wifi_sid.get(currWifiIndex),
 			wifi_pass.get(currWifiIndex), true);
 	WifiAccessPoint.enable(false);

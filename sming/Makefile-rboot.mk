@@ -153,8 +153,8 @@ EXTRA_INCDIR += $(SDK_BASE)/include/espressif
 
 
 # compiler flags using during compilation of source files
-CFLAGS		= -Os -g -Wpointer-arith -Wl,-EL -nostdlib -mlongcalls -mtext-section-literals -finline-functions -fdata-sections -ffunction-sections -D__ets__ -DICACHE_FLASH -DARDUINO=106 -DCOM_SPEED_SERIAL=$(COM_SPEED_SERIAL) $(USER_CFLAGS) -std=c99# -Werror -Wundef 
-CXXFLAGS	= $(CFLAGS) -fno-rtti -fno-exceptions -std=c99 -std=c++11 -felide-constructors -Wno-literal-suffix     #-std=c++11
+CFLAGS		= -Os -g -Wpointer-arith -Wundef -Werror -Wl,-EL -nostdlib -mlongcalls -mtext-section-literals -finline-functions -fdata-sections -ffunction-sections -D__ets__ -DICACHE_FLASH -DARDUINO=106 $(USER_CFLAGS)
+CXXFLAGS	= $(CFLAGS) -fno-rtti -fno-exceptions -std=c++11 -felide-constructors -Wno-literal-suffix
 
 # libmain must be modified for rBoot big flash support (just one symbol gets weakened)
 ifeq ($(RBOOT_BIG_FLASH),1)
