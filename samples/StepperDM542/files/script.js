@@ -108,10 +108,12 @@
 	  }
 	  function writeToScreen(message)
 	  {
-		var pre = parent.document.createElement("p");
-		pre.style.wordWrap = "break-word";
-		pre.innerHTML = message;
-		output.appendChild(pre);
+		// var pre = parent.document.createElement("p");
+		// pre.style.wordWrap = "break-word";
+		// pre.innerHTML = message;
+		// output.appendChild(pre);
+		
+		output.innerHTML = message + "<br>\n" + output.innerHTML;		
 	  }
 	  function doDisconnect()
 	  {

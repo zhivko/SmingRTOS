@@ -37,6 +37,8 @@
 # DISABLE_SPIFFS = 1
 SPIFF_FILES = files
 
+ESPTOOL2 ?= /home/klemen/git/esptool2/esptool2
+
 #### overridable rBoot options ####
 ## use rboot build mode
 RBOOT_ENABLED ?= 1

@@ -2,9 +2,9 @@
 #include "SmingCore.h"
 
 // download urls, set appropriately
-#define ROM_0_URL  "http://192.168.7.5:80/rom0.bin"
-#define ROM_1_URL  "http://192.168.7.5:80/rom1.bin"
-#define SPIFFS_URL "http://192.168.7.5:80/spiff_rom.bin"
+#define ROM_0_URL  "http://192.168.1.19:80/BasicRBoot/rom0.bin"
+#define ROM_1_URL  "http://192.168.1.19:80/BasicRBoot/rom1.bin"
+#define SPIFFS_URL "http://192.168.1.19:80/BasicRBoot/spiff_rom.bin"
 
 // If you want, you can define WiFi settings globally in Eclipse Environment Variables
 #ifndef WIFI_SSID

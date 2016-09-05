@@ -1,4 +1,4 @@
-//#include "SerialReadingDelegateDemo.h"
+#include "SerialReadingDelegateDemo.h"
 #include <user_config.h>
 #include <SmingCore.h>
 
@@ -52,7 +52,7 @@ uint32_t deltat = 2000;
 String lastPositionMessage = "";
 bool steppersOn = false;
 
-rBootHttpUpdate* otaUpdater;
+rBootHttpUpdate* otaUpdater = 0;
 
 String ROM_0_URL = "http://192.168.1.19/firmwareRtos/rom0.bin";
 String SPIFFS_URL = "http://192.168.1.19/firmwareRtos/spiff_rom.bin";
@@ -62,7 +62,7 @@ uint8_t y = 1;
 uint8_t z = 2;
 uint8_t e = 3;
 
-//SerialReadingDelegateDemo delegateDemoClass;
+SerialReadingDelegateDemo delegateDemoClass;
 
 int8_t encoder0PinA = 5;
 int8_t encoder0PinB = 4;
@@ -200,7 +200,6 @@ void reportEncoderPosition() {
 	//zmtp_msg_t *msg = zmtp_msg_from_const_data(0, "hello", 6);
 	//zmtp_msg_destroy(&msg);
 
-
 	//zmtp_msg_test (false);
 	//zmtp_channel_test (false);
 
@@ -253,8 +252,7 @@ void disableMotors() {
 
 void reportStatus() {
 	char buf[30];
-	sprintf(buf, "X%d Y%d Z%d E%d M%d", curPos[0], curPos[1], curPos[2],
-			curPos[3], steppersOn);
+	sprintf(buf, "X%d Y%d Z%d E%d M%d", curPos[x], curPos[y], curPos[z], curPos[e], steppersOn);
 	String message = String(buf);
 	if (!message.equals(lastPositionMessage)) {
 		sendToClients(message);
@@ -383,27 +381,27 @@ void Switch() {
 }
 
 void OtaUpdate() {
-
-	Serial.println("Updating...");
-	sendToClients("Firmware ota update started...");
-
-	hardwareTimer.stop();
-
 	uint8 slot;
 	rboot_config bootconf;
 
+
+	Serial.println("Updating...");
+
+	hardwareTimer.stop();
+	reportTimer.stop();
+
+
+	sendToClients("Firmware ota update started...");
+
+
 	// need a clean object, otherwise if run before and failed will not run again
-	if (otaUpdater)
-		delete otaUpdater;
+	if (otaUpdater) delete otaUpdater;
 	otaUpdater = new rBootHttpUpdate();
 
 	// select rom slot to flash
 	bootconf = rboot_get_config();
 	slot = bootconf.current_rom;
-	if (slot == 0)
-		slot = 1;
-	else
-		slot = 0;
+	if (slot == 0) slot = 1; else slot = 0;
 
 #ifndef RBOOT_TWO_ROMS
 	// flash rom to position indicated in the rBoot config rom table
@@ -515,15 +513,18 @@ void parseGcode(String commandLine) {
 					nextPos[index] = nextPos[index] - atol(posStr.c_str());
 				else
 					nextPos[index] = atol(posStr.c_str());
-				Serial.printf("Set nextpos[%d] to %d\r\n", index,
-						nextPos[index]);
+
+				char buf[150];
+				sprintf(buf, "Set nextpos[%d] to %d\r\n", index, nextPos[index]);
+				Serial.printf(buf);
+				String msgBack = String(buf);
+				sendToClients(msgBack);
 			}
 		}
 	}
 }
 
-void serialCallBack(Stream& stream, char arrivedChar,
-		unsigned short availableCharsCount) {
+void serialCallBack(Stream& stream, char arrivedChar, unsigned short availableCharsCount) {
 	int ia = (int) arrivedChar;
 	if (ia == 13) {
 		char str[availableCharsCount];
@@ -536,13 +537,10 @@ void serialCallBack(Stream& stream, char arrivedChar,
 
 		if (!strcmp(str, "connect")) {
 // connect to wifi
-			WifiStation.config(wifi_sid.get(currWifiIndex),
-					wifi_pass.get(currWifiIndex));
+			WifiStation.config(wifi_sid.get(currWifiIndex), wifi_pass.get(currWifiIndex));
 			WifiStation.enable(true);
 		} else if (!strcmp(str, "ip")) {
-			Serial.printf("ip: %s mac: %s\r\n",
-					WifiStation.getIP().toString().c_str(),
-					WifiStation.getMAC().c_str());
+			Serial.printf("ip: %s mac: %s\r\n", WifiStation.getIP().toString().c_str(), WifiStation.getMAC().c_str());
 		} else if (!strcmp(str, "ota")) {
 			OtaUpdate();
 		} else if (!strcmp(str, "restart")) {
@@ -640,8 +638,7 @@ void wsConnected(WebSocket& socket) {
 	WebSocketsList &clients = server.getActiveWebSockets();
 	for (int i = 0; i < clients.count(); i++) {
 		clients[i].sendString(
-				"Connected to station: " + wifi_sid.get(currWifiIndex)
-						+ ", SDK version: " + system_get_sdk_version());
+				"Connected to station: " + wifi_sid.get(currWifiIndex) + ", appVer:1.6, SDK version: " + system_get_sdk_version());
 	}
 
 }
@@ -767,10 +764,6 @@ void connectOk() {
 
 	startWebServer();
 
-	Serial.println("Init ended.");
-	Serial.println("Type 'help' and press enter for instructions.");
-	Serial.println();
-	//Serial.setCallback(serialCallBack);
 
 	if (ipString.equals("192.168.1.115") || ipString.equals("192.168.1.110")) {
 // distance sensor
@@ -781,15 +774,20 @@ void connectOk() {
 		system_uart_swap();
 		//delegateDemoClass.begin();
 		reportTimer.initializeMs(100, reportAnalogue).start();
-	} else if (ipString.equals("192.168.1.111")
-			|| ipString.equals("192.168.1.112")) {
+	} else if (ipString.equals("192.168.1.111") || ipString.equals("192.168.1.112") || ipString.equals("192.168.1.21")) {
 // 4 axis stepper driver
 		Serial.println("MODE: 4 Axis Stepper driver");
+
+		Serial.println("Init ended.");
+		Serial.println("Type 'help' and press enter for instructions.");
+		Serial.println();
+
+		Serial.setCallback(serialCallBack);
 
 		deltat = 2000;
 
 		if (ipString.equals("192.168.1.112"))
-			parseGcode("reassign x=3 y=0 e=1 z=2");
+			parseGcode("reassign x=0 y=3 e=1 z=2");
 		else if (ipString.equals("192.168.1.111"))
 			parseGcode("reassign x=0 y=1 e=3 z=2");
 
@@ -819,8 +817,7 @@ void connectNotOk() {
 
 	WifiStation.enable(false);
 	incrementNextWifiIndex();
-	WifiStation.config(wifi_sid.get(currWifiIndex),
-			wifi_pass.get(currWifiIndex), false);
+	WifiStation.config(wifi_sid.get(currWifiIndex), wifi_pass.get(currWifiIndex), false);
 	WifiStation.enable(true);
 	WifiStation.waitConnection(connectOk, 12, connectNotOk);
 
@@ -865,16 +862,14 @@ void init() {
 	wifi_set_opmode(STATION_MODE);
 
 	//wifi_sid.add("linksys");
-	wifi_sid.add("Sintex");
 	wifi_sid.add("AsusKZ");
+	wifi_sid.add("Sintex");
 	//wifi_pass.add("Doitman1");
-	wifi_pass.add("sintex92");
 	wifi_pass.add("Doitman1");
-
+	wifi_pass.add("sintex92");
 
 	debugf("trying to connect to: %s", wifi_sid.get(currWifiIndex).c_str());
-	WifiStation.config(wifi_sid.get(currWifiIndex),
-			wifi_pass.get(currWifiIndex), true);
+	WifiStation.config(wifi_sid.get(currWifiIndex), wifi_pass.get(currWifiIndex), true);
 	WifiAccessPoint.enable(false);
 	WifiStation.enable(true);
 	WifiStation.waitConnection(connectOk, 18, connectNotOk);
