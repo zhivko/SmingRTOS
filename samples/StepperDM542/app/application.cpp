@@ -54,8 +54,10 @@ bool steppersOn = false;
 
 rBootHttpUpdate* otaUpdater = 0;
 
-#define ROM_0_URL  "http://192.168.43.21/firmwareRtos/samples/StepperDM542/out/firmware/rom0.bin"
-#define SPIFFS_URL  "http://192.168.43.21/firmwareRtos/samples/StepperDM542/out/firmware/spiff_rom.bin"
+//#define ROM_0_URL  "http://192.168.43.21/firmwareRtos/samples/StepperDM542/out/firmware/rom0.bin"
+//#define SPIFFS_URL  "http://192.168.43.21/firmwareRtos/samples/StepperDM542/out/firmware/spiff_rom.bin"
+#define ROM_0_URL  "http://192.168.1.19/firmwareRtos/samples/StepperDM542/out/firmware/rom0.bin"
+#define SPIFFS_URL  "http://192.168.1.19/firmwareRtos/samples/StepperDM542/out/firmware/spiff_rom.bin"
 
 uint8_t x = 0;
 uint8_t y = 1;
@@ -67,6 +69,49 @@ SerialReadingDelegateDemo delegateDemoClass;
 int8_t encoder0PinA = 5;
 int8_t encoder0PinB = 4;
 long encoder0Pos = 0;
+
+Timer procTimer;
+bool state = true;
+#define LED_PIN 2 // GPIO2
+
+// forward declaration
+void STADisconnect(String ssid, uint8_t ssid_len, uint8_t bssid[6], uint8_t reason);
+
+void initPins() {
+	Serial.println("Init pins");
+
+//---------------------
+	step[0] = 5; //2
+	dir[0] = 4; //0
+
+	step[1] = 14; //4
+	dir[1] = 12; //5
+//---------------------
+	step[2] = 03;
+	dir[2] = 01;
+
+	step[3] = 15;
+	dir[3] = 13;
+//---------------------
+//system_soft_wdt_feed();
+
+	for (int i = 0; i < 4; i++) {
+		pinMode(step[i], OUTPUT);
+		pinMode(dir[i], OUTPUT);
+		digitalWrite(step[i], true);
+		digitalWrite(dir[i], true);
+		curPos[i] = 0;
+		nextPos[i] = 0;
+	}
+
+	pinMode(2, OUTPUT);
+}
+
+void enableMotors() {
+	initPins();
+	steppersOn = true;
+	digitalWrite(2, false);
+}
 
 char* deblank(char* input) /* deblank accepts a char[] argument and returns a char[] */
 {
@@ -240,11 +285,6 @@ void sendToClients(String message) {
 	}
 }
 
-void enableMotors() {
-	steppersOn = true;
-	digitalWrite(2, false);
-}
-
 void disableMotors() {
 	steppersOn = false;
 	digitalWrite(2, true);
@@ -304,11 +344,11 @@ void IRAM_ATTR StepperTimerInt() {
 			if (curPos[i] != nextPos[i]) {
 				int8_t sign = -1;
 				if (nextPos[i] > curPos[i])
-				sign = 1;
+					sign = 1;
 				if (sign > 0)
-				digitalWrite(dir[i], false);
+					digitalWrite(dir[i], false);
 				else
-				digitalWrite(dir[i], true);
+					digitalWrite(dir[i], true);
 				curPos[i] = curPos[i] + sign;
 				pin_mask_steppers = pin_mask_steppers | (1 << step[i]);
 			}
@@ -322,6 +362,7 @@ void IRAM_ATTR StepperTimerInt() {
 }
 
 void OtaUpdate_CallBack(bool result) {
+	sendToClients("OtaUpdate_CallBack");
 
 	Serial.println("In callback...");
 	if (result == true) {
@@ -398,6 +439,8 @@ void OtaUpdate() {
 		delete otaUpdater;
 	otaUpdater = new rBootHttpUpdate();
 
+	sendToClients("Firmware ota update started...1");
+
 	// select rom slot to flash
 	bootconf = rboot_get_config();
 	slot = bootconf.current_rom;
@@ -427,12 +470,14 @@ void OtaUpdate() {
 	}
 #endif
 
+	sendToClients("Firmware ota update started...2");
 	// request switch and reboot on success
 	otaUpdater->switchToRom(slot);
 	// and/or set a callback (called on failure or success without switching requested)
 	otaUpdater->setCallback(OtaUpdate_CallBack);
 
 	// start update
+	sendToClients("Firmware ota update started...3");
 	otaUpdater->start();
 }
 
@@ -674,11 +719,17 @@ void wsConnected(WebSocket& socket) {
 	lastPositionMessage = "";
 	// Notify everybody about new connection
 
+	uint8 slotNo = rboot_get_current_rom();
+	String slotNoStr = String(slotNo);
+
+	uint32 heapSize = system_get_free_heap_size();
+	String heapSizeStr = String(heapSize);
+
 	WebSocketsList &clients = server.getActiveWebSockets();
 	for (int i = 0; i < clients.count(); i++) {
 		clients[i].sendString(
-				"Connected to station: " + wifi_sid.get(currWifiIndex) + ", appVer:1.21, SDK version: "
-						+ system_get_sdk_version());
+				"Connected to station: " + wifi_sid.get(currWifiIndex) + ", ROM:" + slotNoStr + ", heapSize: "
+						+ heapSizeStr + ", appVer:1.21, SDK version: " + system_get_sdk_version());
 	}
 
 }
@@ -702,43 +753,14 @@ void wsDisconnected(WebSocket& socket) {
 	totalActiveSockets--;
 }
 
-void initPins() {
-	Serial.println("Init pins");
-
-//---------------------
-	step[0] = 5; //2
-	dir[0] = 4; //0
-
-	step[1] = 14; //4
-	dir[1] = 12; //5
-//---------------------
-	step[2] = 03;
-	dir[2] = 01;
-
-	step[3] = 15;
-	dir[3] = 13;
-//---------------------
-//system_soft_wdt_feed();
-
-	for (int i = 0; i < 4; i++) {
-		pinMode(step[i], OUTPUT);
-		pinMode(dir[i], OUTPUT);
-		digitalWrite(step[i], true);
-		digitalWrite(dir[i], true);
-		curPos[i] = 0;
-		nextPos[i] = 0;
-	}
-
-	pinMode(2, OUTPUT);
-	enableMotors();
-}
-
 void startWebServer() {
 
 	Serial.println("Starting web server...Phase1");
+
 	server.listen(80);
 	server.addPath("/", onIndex);
 	server.setDefaultHandler(onFile);
+	server.setTimeOut(500);
 
 // Web Sockets configuration
 	server.enableWebSockets(true);
@@ -746,8 +768,6 @@ void startWebServer() {
 	server.setWebSocketMessageHandler(wsMessageReceived);
 	server.setWebSocketBinaryHandler(wsBinaryReceived);
 	server.setWebSocketDisconnectionHandler(wsDisconnected);
-
-	server.setTimeOut(500);
 
 	Serial.println("\r\n=== WEB SERVER STARTED ===");
 	Serial.println(WifiStation.getIP().toString());
@@ -797,12 +817,15 @@ void doEncoderB() {
 	}
 }
 
-// Will be called when WiFi station was connected to AP
-void connectOk() {
-	Serial.println("I'm CONNECTED to AP_SSID=" + wifi_sid.get(currWifiIndex));
-	Serial.println("IP: ");
+
+void connectOk(IPAddress ip, IPAddress mask, IPAddress gateway) {
+//void connectOk() {
 	String ipString = WifiStation.getIP().toString();
-	Serial.println(ipString);
+	Serial.println("I'm CONNECTED to AP_SSID=" + wifi_sid.get(currWifiIndex) + " IP: " + ipString);
+	//String ipString = ip.toString();
+	Serial.println("IP: " + ipString);
+
+	Serial.setCallback(serialCallBack);
 
 	startWebServer();
 
@@ -815,16 +838,14 @@ void connectOk() {
 		system_uart_swap();
 		//delegateDemoClass.begin();
 		reportTimer.initializeMs(100, reportAnalogue).start();
-	} else if (ipString.equals("192.168.1.111") || ipString.equals("192.168.1.112")
-			|| ipString.equals("192.168.1.21") || ipString.equals("192.168.43.154")) {
+	} else if (ipString.equals("192.168.1.111") || ipString.equals("192.168.1.112") || ipString.equals("192.168.1.21")
+			|| ipString.equals("192.168.43.154")) {    //
 // 4 axis stepper driver
 		Serial.println("MODE: 4 Axis Stepper driver");
 
 		Serial.println("Init ended.");
 		Serial.println("Type 'help' and press enter for instructions.");
 		Serial.println();
-
-		Serial.setCallback(serialCallBack);
 
 		deltat = 2000;
 
@@ -836,7 +857,6 @@ void connectOk() {
 		reportTimer.initializeMs(300, reportStatus).start();
 		hardwareTimer.initializeUs(deltat, StepperTimerInt);
 		hardwareTimer.startOnce();
-		initPins();
 	} else if (ipString.equals("192.168.1.116")) {
 		Serial.println("MODE: Encoder driver");
 		pinMode(encoder0PinA, INPUT);
@@ -853,16 +873,29 @@ void connectOk() {
 		Ltc2400Spi->begin();
 		reportTimer.initializeMs(300, readFromLTC2400).startOnce();
 	}
+
 }
 
-void connectNotOk() {
+void checkConnection() {
+	Serial.println("checkConnection");
+	if (!WifiStation.isConnected()) {
+		debugf("Connect NOT OK");
+		incrementNextWifiIndex();
+		WifiStation.config(wifi_sid.get(currWifiIndex), wifi_pass.get(currWifiIndex), false);
+		WifiStation.connect();
+		//WifiStation.restartWaitConnection(connectOk, 10, connectNotOk);
+		//WifiStation.waitConnection(connectOk, 10, connectNotOk);
+	}
+}
 
-	WifiStation.enable(false);
-	incrementNextWifiIndex();
-	WifiStation.config(wifi_sid.get(currWifiIndex), wifi_pass.get(currWifiIndex), false);
-	WifiStation.enable(true);
-	WifiStation.waitConnection(connectOk, 12, connectNotOk);
+void STADisconnect(String ssid, uint8_t ssid_len, uint8_t bssid[6], uint8_t reason) {
+	checkConnection();
+}
 
+void blink() {
+	Serial.printf("blink: %i\n", (int) state);
+	digitalWrite(LED_PIN, state);
+	state = !state;
 }
 
 void init() {
@@ -870,7 +903,7 @@ void init() {
 	Serial.begin(115200);
 	WifiStation.enable(false);
 	System.setCpuFrequency(eCF_160MHz);
-	//Serial.systemDebugOutput(true);
+	Serial.systemDebugOutput(true);
 	Serial.println("************************");
 	Serial.println("***** Init running *****");
 	Serial.println("************************");
@@ -900,23 +933,47 @@ void init() {
 	debugf("spiffs disabled");
 #endif
 
-	wifi_set_opmode (STATION_MODE);
-	WifiAccessPoint.enable(false);
 
-	Serial.setCallback(serialCallBack);
-
+	//wifi_sid.add("linksys");
+	//wifi_pass.add("Doitman1");
+	wifi_sid.add("Sintex");
+	wifi_pass.add("sintex92");
+	wifi_sid.add("AsusKZ");
+	wifi_pass.add("Doitman1");
 	wifi_sid.add("AndroidAp");
 	wifi_pass.add("Doitman1");
 
-	WifiStation.config(wifi_sid.get(currWifiIndex) , wifi_pass.get(currWifiIndex));
-	//WifiStation.config("AsusKZ", "Doitman1");
-
-	// Run our method when station was connected to AP
-	//WifiEvents.onStationGotIP(STAGotIP);
+	WifiStation.config(wifi_sid.get(currWifiIndex), wifi_pass.get(currWifiIndex));
+	WifiAccessPoint.enable(false);
 	WifiStation.enable(true);
-	WifiStation.waitConnection(connectOk, 20, connectNotOk);
 
-	//pinMode(LED_PIN, OUTPUT);
-	//procTimer.initializeMs(1000, blink).start();
 
+	procTimer.initializeMs(20000, checkConnection).start();
+
+	WifiEvents.onStationGotIP(connectOk);
+
+	//WifiStation.waitConnection(connectOk, 10, connectNotOk);
+
+	/*
+
+
+	 //wifi_set_opmode (STATION_MODE);
+	 WifiAccessPoint.enable(false);
+
+	 wifi_sid.add("AndroidAp");
+	 wifi_pass.add("Doitman1");
+
+	 //WifiStation.config(wifi_sid.get(currWifiIndex) , wifi_pass.get(currWifiIndex));
+	 WifiStation.config(wifi_sid.get(currWifiIndex), wifi_pass.get(currWifiIndex));
+
+	 WifiEvents.onStationDisconnect(STADisconnect);
+
+	 checkConnection();
+	 //WifiStation.connect();
+	 //WifiStation.waitConnection(connectOk, 20, connectNotOk);
+
+	 //pinMode(LED_PIN, OUTPUT);
+	 procTimer.initializeMs(1000, blink).start();
+	 */
 }
+

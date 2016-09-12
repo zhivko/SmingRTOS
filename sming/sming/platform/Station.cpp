@@ -288,8 +288,6 @@ void StationClass::waitConnection(ConnectionDelegate successfulConnected, int se
 	connectionStarted = millis();
 }
 
-////////////
-
 void StationClass::staticScanCompleted(void *arg, STATUS status)
 {
 	BssList list;
@@ -329,10 +327,15 @@ void StationClass::onSystemReady()
 void StationClass::internalCheckConnection()
 {
 	uint32 duration = millis() - connectionStarted;
+	debugf("Duration: %i \n", duration);
 	if (isConnected())
 	{
+		debugf("Connected in %i milis.\n",duration);
 		ConnectionDelegate callOk = nullptr;
 		if (onConnectOk) {
+			debugf("Calling onConnectOk()...");
+			onConnectOk();
+			debugf("Calling onConnectOk()...DONE.");
 			callOk = onConnectOk;
 		}
 
@@ -347,6 +350,7 @@ void StationClass::internalCheckConnection()
 	}
 	else if (connectionTimeOut > 0 && duration > (uint32)connectionTimeOut * 1000)
 	{
+		onConnectFail();
 		ConnectionDelegate call = onConnectFail;
 		onConnectOk = nullptr;
 		onConnectFail = nullptr;
