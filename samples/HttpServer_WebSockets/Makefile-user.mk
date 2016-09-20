@@ -37,3 +37,6 @@
 #DISABLE_SPIFFS = 1
 # SPIFF_FILES = files
 
+ESPTOOL2     ?= /home/klemen/git/esptool2/esptool2
+COM_SPEED_ESPTOOL ?= 512000
+

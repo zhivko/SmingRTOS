@@ -383,6 +383,8 @@ endif
 	$(TERMINAL)
 
 flashinit:
+	$(vecho) "Flash blank data for RBOOT"
+	$(ESPTOOL) -p $(COM_PORT) -b $(COM_SPEED_ESPTOOL) write_flash $(flashimageoptions) 0x1000 $(SMING_HOME)/compiler/data/blankrboot.bin
 	$(vecho) "Flash init data default and blank data."
 	$(ESPTOOL) -p $(COM_PORT) -b $(COM_SPEED_ESPTOOL) write_flash $(flashimageoptions) 0x7c000 $(SDK_BASE)/bin/esp_init_data_default.bin 0x7e000 $(SDK_BASE)/bin/blank.bin 0x4B000 $(SMING_HOME)/compiler/data/blankfs.bin
 

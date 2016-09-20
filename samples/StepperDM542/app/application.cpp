@@ -825,8 +825,6 @@ void connectOk(IPAddress ip, IPAddress mask, IPAddress gateway) {
 	//String ipString = ip.toString();
 	Serial.println("IP: " + ipString);
 
-	Serial.setCallback(serialCallBack);
-
 	startWebServer();
 
 	if (ipString.equals("192.168.1.115") || ipString.equals("192.168.1.110")) {
@@ -836,11 +834,13 @@ void connectOk(IPAddress ip, IPAddress mask, IPAddress gateway) {
 		Serial.begin(57600);
 		deltat = 100000;
 		system_uart_swap();
-		//delegateDemoClass.begin();
+		delegateDemoClass.begin();
 		reportTimer.initializeMs(100, reportAnalogue).start();
+
 	} else if (ipString.equals("192.168.1.111") || ipString.equals("192.168.1.112") || ipString.equals("192.168.1.21")
 			|| ipString.equals("192.168.43.154")) {    //
 // 4 axis stepper driver
+		Serial.setCallback(serialCallBack);
 		Serial.println("MODE: 4 Axis Stepper driver");
 
 		Serial.println("Init ended.");
@@ -873,6 +873,10 @@ void connectOk(IPAddress ip, IPAddress mask, IPAddress gateway) {
 		Ltc2400Spi->begin();
 		reportTimer.initializeMs(300, readFromLTC2400).startOnce();
 	}
+	else
+	{
+		Serial.setCallback(serialCallBack);
+	}
 
 }
 
@@ -903,7 +907,7 @@ void init() {
 	Serial.begin(115200);
 	WifiStation.enable(false);
 	System.setCpuFrequency(eCF_160MHz);
-	Serial.systemDebugOutput(true);
+	//Serial.systemDebugOutput(true);
 	Serial.println("************************");
 	Serial.println("***** Init running *****");
 	Serial.println("************************");

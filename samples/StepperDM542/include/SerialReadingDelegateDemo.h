@@ -4,6 +4,7 @@
 #define INCLUDE_SERIALREADINGDELEGATEDEMO_H_
 
 extern String analogResult;
+extern void sendToClients(String message);
 String tempAnalogResult="";
 
 //*** Example of global callback routine
@@ -33,6 +34,7 @@ public:
 		else
 		{
 			tempAnalogResult += arrivedChar;
+			//sendToClients(tempAnalogResult);
 		}
 	}
 
