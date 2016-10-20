@@ -74,8 +74,16 @@ Timer procTimer;
 bool state = true;
 #define LED_PIN 2 // GPIO2
 
+// UDP server
+const uint16_t EchoPort = 1234;
+
 // forward declaration
 void STADisconnect(String ssid, uint8_t ssid_len, uint8_t bssid[6], uint8_t reason);
+void onReceive(UdpConnection& connection, char *data, int size, IPAddress remoteIP, uint16_t remotePort);
+
+
+UdpConnection udp(onReceive);
+
 
 void initPins() {
 	Serial.println("Init pins");
@@ -729,7 +737,7 @@ void wsConnected(WebSocket& socket) {
 	for (int i = 0; i < clients.count(); i++) {
 		clients[i].sendString(
 				"Connected to station: " + wifi_sid.get(currWifiIndex) + ", ROM:" + slotNoStr + ", heapSize: "
-						+ heapSizeStr + ", appVer:1.21, SDK version: " + system_get_sdk_version());
+						+ heapSizeStr + ", appVer:1.22, SDK version: " + system_get_sdk_version());
 	}
 
 }
@@ -830,6 +838,7 @@ void connectOk(IPAddress ip, IPAddress mask, IPAddress gateway) {
 	if (ipString.equals("192.168.1.115") || ipString.equals("192.168.1.110")) {
 // distance sensor
 		Serial.println("MODE: LEUZE Distance sensor");
+		udp.listen(EchoPort);
 
 		Serial.begin(57600);
 		deltat = 100000;
@@ -981,3 +990,22 @@ void init() {
 	 */
 }
 
+void onReceive(UdpConnection& connection, char *data, int size, IPAddress remoteIP, uint16_t remotePort)
+{
+	char buf[60];
+	char buf1[12];
+
+	sendToClients("UDP received");
+	debugf("UDP Sever callback from %s:%d, %d bytes", remoteIP.toString().c_str(), remotePort, size);
+
+	// We implement string mode server for example
+	Serial.print(">\t");
+	Serial.print(data);
+
+	floatAnalog = atof(analogResult.c_str()) / 10.0;
+	dtostrf(floatAnalog, 7, 4, buf1);
+	sprintf(buf, "%s", deblank(buf1));
+	String message = String(buf);
+
+	udp.sendStringTo(remoteIP, EchoPort, message);
+}
