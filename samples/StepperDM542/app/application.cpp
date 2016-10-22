@@ -228,6 +228,20 @@ void reportAnalogue() {
 			clients[i].sendString(message);
 		}
 		lastPositionMessage = message;
+
+		/*
+		union u
+		{
+		    float f;
+		    char s[sizeof(float)];
+		};
+
+		union u foo;
+		foo.f = floatAnalog;
+*/
+		//udp.sendStringTo(IPAddress("192.168.1.19"), (uint16_t)1234, foo.s);
+		udp.sendStringTo(IPAddress("192.168.1.12"), (uint16_t)1234, analogResult);
+
 		//Serial.printf("Analogue: %f", analogResult.c_str());
 	}
 }
@@ -246,7 +260,6 @@ void reportEncoderPosition() {
 		for (int i = 0; i < clients.count(); i++) {
 			clients[i].sendString(message1);
 		}
-		lastPositionMessage = message1;
 	}
 
 	//printf(" * zmtp_msg: ");
@@ -949,12 +962,12 @@ void init() {
 
 	//wifi_sid.add("linksys");
 	//wifi_pass.add("Doitman1");
-	wifi_sid.add("Sintex");
-	wifi_pass.add("sintex92");
+	//wifi_sid.add("Sintex");
+	//wifi_pass.add("sintex92");
 	wifi_sid.add("AsusKZ");
 	wifi_pass.add("Doitman1");
-	wifi_sid.add("AndroidAp");
-	wifi_pass.add("Doitman1");
+	//wifi_sid.add("AndroidAp");
+	//wifi_pass.add("Doitman1");
 
 	WifiStation.config(wifi_sid.get(currWifiIndex), wifi_pass.get(currWifiIndex));
 	WifiAccessPoint.enable(false);
