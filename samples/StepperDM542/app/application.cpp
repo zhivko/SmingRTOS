@@ -59,6 +59,10 @@ rBootHttpUpdate* otaUpdater = 0;
 #define ROM_0_URL  "http://192.168.1.19/firmwareRtos/samples/StepperDM542/out/firmware/rom0.bin"
 #define SPIFFS_URL  "http://192.168.1.19/firmwareRtos/samples/StepperDM542/out/firmware/spiff_rom.bin"
 
+// UDP server
+uint16_t udpServerPort = 1234;
+String udpServerIP = "192.168.1.19";
+
 uint8_t x = 0;
 uint8_t y = 1;
 uint8_t z = 2;
@@ -74,8 +78,6 @@ Timer procTimer;
 bool state = true;
 #define LED_PIN 2 // GPIO2
 
-// UDP server
-const uint16_t EchoPort = 1234;
 
 // forward declaration
 void STADisconnect(String ssid, uint8_t ssid_len, uint8_t bssid[6], uint8_t reason);
@@ -240,7 +242,7 @@ void reportAnalogue() {
 		foo.f = floatAnalog;
 */
 		//udp.sendStringTo(IPAddress("192.168.1.19"), (uint16_t)1234, foo.s);
-		udp.sendStringTo(IPAddress("192.168.1.12"), (uint16_t)1234, analogResult);
+		udp.sendStringTo(IPAddress(udpServerIP), udpServerPort, analogResult);
 
 		//Serial.printf("Analogue: %f", analogResult.c_str());
 	}
@@ -526,6 +528,23 @@ void parseGcode(String commandLine) {
 		for (int i = 0; i < 4; i++) {
 			nextPos[i] = curPos[i];
 		}
+	} else if (commandLine.startsWith("udpServerIP"))
+	{
+		Vector<String> commandToken;
+		int numToken = splitString(commandLine, ' ', commandToken);
+		if(numToken==2)
+			udpServerIP = commandToken[1];
+		if(numToken==3)
+		{
+			udpServerIP = commandToken[1];
+			udpServerPort = atoi(commandToken[2].c_str());
+		}
+		char buf[150];
+		sprintf(buf, "Udp server port %s, port: %d", udpServerIP.c_str(), udpServerPort);
+		String msgBack = String(buf);
+		sendToClients(msgBack);
+		return;
+
 	} else if (commandLine.startsWith("reassign")) {
 //sendToClients(message)
 //reassign x=3 y=0 z=2 e=1
@@ -778,10 +797,10 @@ void startWebServer() {
 
 	Serial.println("Starting web server...Phase1");
 
+	server.setTimeOut(2000);
 	server.listen(80);
 	server.addPath("/", onIndex);
 	server.setDefaultHandler(onFile);
-	server.setTimeOut(500);
 
 // Web Sockets configuration
 	server.enableWebSockets(true);
@@ -851,7 +870,7 @@ void connectOk(IPAddress ip, IPAddress mask, IPAddress gateway) {
 	if (ipString.equals("192.168.1.115") || ipString.equals("192.168.1.110")) {
 // distance sensor
 		Serial.println("MODE: LEUZE Distance sensor");
-		udp.listen(EchoPort);
+		udp.listen(udpServerPort);
 
 		Serial.begin(57600);
 		deltat = 100000;
@@ -859,7 +878,7 @@ void connectOk(IPAddress ip, IPAddress mask, IPAddress gateway) {
 		delegateDemoClass.begin();
 		reportTimer.initializeMs(100, reportAnalogue).start();
 
-	} else if (ipString.equals("192.168.1.111") || ipString.equals("192.168.1.112") || ipString.equals("192.168.1.21")
+	} else if (ipString.equals("192.168.1.113") || ipString.equals("192.168.1.112") || ipString.equals("192.168.1.21")
 			|| ipString.equals("192.168.43.154")) {    //
 // 4 axis stepper driver
 		Serial.setCallback(serialCallBack);
@@ -873,7 +892,7 @@ void connectOk(IPAddress ip, IPAddress mask, IPAddress gateway) {
 
 		if (ipString.equals("192.168.1.112"))
 			parseGcode("reassign x=0 y=3 e=1 z=2");
-		else if (ipString.equals("192.168.1.111"))
+		else if (ipString.equals("192.168.1.113"))
 			parseGcode("reassign x=0 y=1 e=3 z=2");
 
 		reportTimer.initializeMs(300, reportStatus).start();
@@ -962,8 +981,8 @@ void init() {
 
 	//wifi_sid.add("linksys");
 	//wifi_pass.add("Doitman1");
-	//wifi_sid.add("Sintex");
-	//wifi_pass.add("sintex92");
+	wifi_sid.add("Sintex");
+	wifi_pass.add("sintex92");
 	wifi_sid.add("AsusKZ");
 	wifi_pass.add("Doitman1");
 	//wifi_sid.add("AndroidAp");
@@ -1020,5 +1039,5 @@ void onReceive(UdpConnection& connection, char *data, int size, IPAddress remote
 	sprintf(buf, "%s", deblank(buf1));
 	String message = String(buf);
 
-	udp.sendStringTo(remoteIP, EchoPort, message);
+	udp.sendStringTo(remoteIP, udpServerPort, message);
 }
