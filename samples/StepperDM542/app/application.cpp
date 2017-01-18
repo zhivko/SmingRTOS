@@ -922,11 +922,10 @@ void connectOk(IPAddress ip, IPAddress mask, IPAddress gateway) {
 }
 
 void checkConnection() {
-	Serial.println("checkConnection");
 	if (!WifiStation.isConnected()) {
-		debugf("Connect NOT OK");
-		incrementNextWifiIndex();
+		Serial.printf("Try connection to: %s\n", wifi_sid.get(currWifiIndex).c_str());
 		WifiStation.config(wifi_sid.get(currWifiIndex), wifi_pass.get(currWifiIndex), false);
+		incrementNextWifiIndex();
 		WifiStation.connect();
 		//WifiStation.restartWaitConnection(connectOk, 10, connectNotOk);
 		//WifiStation.waitConnection(connectOk, 10, connectNotOk);
@@ -979,21 +978,22 @@ void init() {
 #endif
 
 
-	//wifi_sid.add("linksys");
-	//wifi_pass.add("Doitman1");
+	wifi_sid.add(WIFI_SSID);
+	wifi_pass.add(WIFI_PWD);
+
+	/*
 	wifi_sid.add("Sintex");
 	wifi_pass.add("sintex92");
 	wifi_sid.add("AsusKZ");
 	wifi_pass.add("Doitman1");
-	//wifi_sid.add("AndroidAp");
-	//wifi_pass.add("Doitman1");
+*/
 
 	WifiStation.config(wifi_sid.get(currWifiIndex), wifi_pass.get(currWifiIndex));
 	WifiAccessPoint.enable(false);
 	WifiStation.enable(true);
 
-
-	procTimer.initializeMs(20000, checkConnection).start();
+	checkConnection();
+	procTimer.initializeMs(8000, checkConnection).start();
 
 	WifiEvents.onStationGotIP(connectOk);
 
