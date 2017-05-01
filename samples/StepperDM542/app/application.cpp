@@ -68,6 +68,11 @@ uint8_t y = 1;
 uint8_t z = 2;
 uint8_t e = 3;
 
+uint8_t x_dir = 1;
+uint8_t y_dir = 1;
+uint8_t z_dir = 1;
+uint8_t e_dir = 1;
+
 SerialReadingDelegateDemo delegateDemoClass;
 
 int8_t encoder0PinA = 5;
@@ -78,14 +83,11 @@ Timer procTimer;
 bool state = true;
 #define LED_PIN 2 // GPIO2
 
-
 // forward declaration
 void STADisconnect(String ssid, uint8_t ssid_len, uint8_t bssid[6], uint8_t reason);
 void onReceive(UdpConnection& connection, char *data, int size, IPAddress remoteIP, uint16_t remotePort);
 
-
 UdpConnection udp(onReceive);
-
 
 void initPins() {
 	Serial.println("Init pins");
@@ -232,15 +234,15 @@ void reportAnalogue() {
 		lastPositionMessage = message;
 
 		/*
-		union u
-		{
-		    float f;
-		    char s[sizeof(float)];
-		};
+		 union u
+		 {
+		 float f;
+		 char s[sizeof(float)];
+		 };
 
-		union u foo;
-		foo.f = floatAnalog;
-*/
+		 union u foo;
+		 foo.f = floatAnalog;
+		 */
 		//udp.sendStringTo(IPAddress("192.168.1.19"), (uint16_t)1234, foo.s);
 		udp.sendStringTo(IPAddress(udpServerIP), udpServerPort, analogResult);
 
@@ -528,14 +530,12 @@ void parseGcode(String commandLine) {
 		for (int i = 0; i < 4; i++) {
 			nextPos[i] = curPos[i];
 		}
-	} else if (commandLine.startsWith("udpServerIP"))
-	{
+	} else if (commandLine.startsWith("udpServerIP")) {
 		Vector<String> commandToken;
 		int numToken = splitString(commandLine, ' ', commandToken);
-		if(numToken==2)
+		if (numToken == 2)
 			udpServerIP = commandToken[1];
-		if(numToken==3)
-		{
+		if (numToken == 3) {
 			udpServerIP = commandToken[1];
 			udpServerPort = atoi(commandToken[2].c_str());
 		}
@@ -547,7 +547,8 @@ void parseGcode(String commandLine) {
 
 	} else if (commandLine.startsWith("reassign")) {
 //sendToClients(message)
-//reassign x=3 y=0 z=2 e=1
+//reassign x=+3 y=+0 z=-2 e=-1
+// - means direction is reverse for relative moves
 		Vector<String> commandToken;
 		int numToken = splitString(commandLine, ' ', commandToken);
 		for (int i = 1; i < numToken; i++) {
@@ -555,14 +556,39 @@ void parseGcode(String commandLine) {
 			String axisIndexStr = commandToken[i].c_str();
 			splitString(axisIndexStr, '=', axisIndex);
 			String axis = axisIndex[0].c_str();
-			if (axis.equals("x"))
-				x = atoi(axisIndex[1].c_str());
-			else if (axis.equals("y"))
-				y = atoi(axisIndex[1].c_str());
-			else if (axis.equals("z"))
-				z = atoi(axisIndex[1].c_str());
-			else if (axis.equals("e"))
-				e = atoi(axisIndex[1].c_str());
+			if (axis.equals("x")) {
+				{
+					x = atoi(axisIndex[2].c_str());
+					if (strcmp(axisIndex[1].c_str(), "+") == 0)
+						x_dir = 1;
+					else
+						x_dir = -1;
+				}
+			} else if (axis.equals("y")) {
+				{
+					y = atoi(axisIndex[2].c_str());
+					if (strcmp(axisIndex[1].c_str(), "+") == 0)
+						y_dir = 1;
+					else
+						y_dir = -1;
+				}
+			} else if (axis.equals("z")) {
+				{
+					z = atoi(axisIndex[2].c_str());
+					if (strcmp(axisIndex[1].c_str(), "+") == 0)
+						z_dir = 1;
+					else
+						z_dir = -1;
+				}
+			} else if (axis.equals("e")) {
+				{
+					e = atoi(axisIndex[2].c_str());
+					if (strcmp(axisIndex[1].c_str(), "+") == 0)
+						e_dir = 1;
+					else
+						e_dir = -1;
+				}
+			}
 		}
 		char buf[150];
 		sprintf(buf, "Reassign: x=%d y=%d z=%d e=%d\r\n", x, y, z, e);
@@ -586,15 +612,35 @@ void parseGcode(String commandLine) {
 				posStr = commandToken[i].substring(1, commandToken[i].length());
 			}
 			int8_t index = -1;
-			if (motor == "X")
+			if (motor.equalsIgnoreCase("X")) {
 				index = x;
-			else if (motor == "Y")
+				if (x_dir == -1)
+					if (sign == "+")
+						sign = "-";
+					else
+						sign = "+";
+			} else if (motor.equalsIgnoreCase("Y")) {
 				index = y;
-			else if (motor == "Z")
+				if (y_dir == -1)
+					if (sign == "+")
+						sign = "-";
+					else
+						sign = "+";
+			} else if (motor.equalsIgnoreCase("Z")) {
 				index = z;
-			else if (motor == "E")
+				if (z_dir == -1)
+					if (sign == "+")
+						sign = "-";
+					else
+						sign = "+";
+			} else if (motor.equalsIgnoreCase("E")) {
 				index = e;
-			else if (motor == "T") {
+				if (e_dir == -1)
+					if (sign == "+")
+						sign = "-";
+					else
+						sign = "+";
+			} else if (motor.equalsIgnoreCase("T")) {
 				deltat = atoi(posStr.c_str());
 			}
 			if (index > -1) {
@@ -857,7 +903,6 @@ void doEncoderB() {
 	}
 }
 
-
 void connectOk(IPAddress ip, IPAddress mask, IPAddress gateway) {
 //void connectOk() {
 	String ipString = WifiStation.getIP().toString();
@@ -891,9 +936,9 @@ void connectOk(IPAddress ip, IPAddress mask, IPAddress gateway) {
 		deltat = 2000;
 
 		if (ipString.equals("192.168.1.112"))
-			parseGcode("reassign x=0 y=3 e=1 z=2");
+			parseGcode("reassign x=+0 y=+3 e=+1 z=+2");
 		else if (ipString.equals("192.168.1.113"))
-			parseGcode("reassign x=0 y=1 e=3 z=2");
+			parseGcode("reassign x=+0 y=+1 e=+3 z=+2");
 
 		reportTimer.initializeMs(300, reportStatus).start();
 		hardwareTimer.initializeUs(deltat, StepperTimerInt);
@@ -913,9 +958,7 @@ void connectOk(IPAddress ip, IPAddress mask, IPAddress gateway) {
 		Ltc2400Spi = new SPISoft(PIN_DO, PIN_DI, PIN_CK, PIN_SS);
 		Ltc2400Spi->begin();
 		reportTimer.initializeMs(300, readFromLTC2400).startOnce();
-	}
-	else
-	{
+	} else {
 		Serial.setCallback(serialCallBack);
 	}
 
@@ -977,16 +1020,15 @@ void init() {
 	debugf("spiffs disabled");
 #endif
 
-
 	wifi_sid.add(WIFI_SSID);
 	wifi_pass.add(WIFI_PWD);
 
 	/*
-	wifi_sid.add("Sintex");
-	wifi_pass.add("sintex92");
-	wifi_sid.add("AsusKZ");
-	wifi_pass.add("Doitman1");
-*/
+	 wifi_sid.add("Sintex");
+	 wifi_pass.add("sintex92");
+	 wifi_sid.add("AsusKZ");
+	 wifi_pass.add("Doitman1");
+	 */
 
 	WifiStation.config(wifi_sid.get(currWifiIndex), wifi_pass.get(currWifiIndex));
 	WifiAccessPoint.enable(false);
@@ -1022,8 +1064,7 @@ void init() {
 	 */
 }
 
-void onReceive(UdpConnection& connection, char *data, int size, IPAddress remoteIP, uint16_t remotePort)
-{
+void onReceive(UdpConnection& connection, char *data, int size, IPAddress remoteIP, uint16_t remotePort) {
 	char buf[60];
 	char buf1[12];
 
