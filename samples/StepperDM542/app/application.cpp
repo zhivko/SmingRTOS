@@ -17,8 +17,8 @@ HardwareTimer hardwareTimer;
 
 // If you want, you can define WiFi settings globally in Eclipse Environment Variables
 #ifndef WIFI_SSID
-#define WIFI_SSID "Enter_wifi_ssid" // Put you SSID and Password here
-#define WIFI_PWD "Enter_wifi_pwd"
+#define WIFI_SSID "linksys" // Put you SSID and Password here
+#define WIFI_PWD "Doitman1"
 #endif
 
 // ltc2400 settings
@@ -68,10 +68,10 @@ uint8_t y = 1;
 uint8_t z = 2;
 uint8_t e = 3;
 
-uint8_t x_dir = 1;
-uint8_t y_dir = 1;
-uint8_t z_dir = 1;
-uint8_t e_dir = 1;
+int8_t x_dir = 1;
+int8_t y_dir = 1;
+int8_t z_dir = 1;
+int8_t e_dir = 1;
 
 SerialReadingDelegateDemo delegateDemoClass;
 
@@ -556,42 +556,47 @@ void parseGcode(String commandLine) {
 			String axisIndexStr = commandToken[i].c_str();
 			splitString(axisIndexStr, '=', axisIndex);
 			String axis = axisIndex[0].c_str();
-			if (axis.equals("x")) {
+
+			if (axis.equalsIgnoreCase("x")) {
 				{
-					x = atoi(axisIndex[2].c_str());
-					if (strcmp(axisIndex[1].c_str(), "+") == 0)
+					x = atoi(axisIndex[1].substring(1,2).c_str());
+					if (axisIndex[1].substring(0,1).equalsIgnoreCase("+")) {
 						x_dir = 1;
-					else
+					} else {
 						x_dir = -1;
+					}
 				}
-			} else if (axis.equals("y")) {
+			} else if (axis.equalsIgnoreCase("y")) {
 				{
-					y = atoi(axisIndex[2].c_str());
-					if (strcmp(axisIndex[1].c_str(), "+") == 0)
+					y = atoi(axisIndex[1].substring(1,2).c_str());
+					if (axisIndex[1].substring(0,1).equalsIgnoreCase("+")) {
 						y_dir = 1;
-					else
+					} else {
 						y_dir = -1;
+					}
 				}
-			} else if (axis.equals("z")) {
+			} else if (axis.equalsIgnoreCase("z")) {
 				{
-					z = atoi(axisIndex[2].c_str());
-					if (strcmp(axisIndex[1].c_str(), "+") == 0)
+					z = atoi(axisIndex[1].substring(1,2).c_str());
+					if (axisIndex[1].substring(0,1).equalsIgnoreCase("+")) {
 						z_dir = 1;
-					else
+					} else {
 						z_dir = -1;
+					}
 				}
-			} else if (axis.equals("e")) {
+			} else if (axis.equalsIgnoreCase("e")) {
 				{
-					e = atoi(axisIndex[2].c_str());
-					if (strcmp(axisIndex[1].c_str(), "+") == 0)
+					e = atoi(axisIndex[1].substring(1,2).c_str());
+					if (axisIndex[1].substring(0,1).equalsIgnoreCase("+")) {
 						e_dir = 1;
-					else
+					} else {
 						e_dir = -1;
+					}
 				}
 			}
 		}
 		char buf[150];
-		sprintf(buf, "Reassign: x=%d y=%d z=%d e=%d\r\n", x, y, z, e);
+		sprintf(buf, "Reassign: x=%d %d y=%d %d z=%d %d e=%d %d\r\n", x_dir, x, y_dir, y, z_dir, z, e_dir, e);
 		String msgBack = String(buf);
 		sendToClients(msgBack);
 		return;
@@ -615,10 +620,17 @@ void parseGcode(String commandLine) {
 			if (motor.equalsIgnoreCase("X")) {
 				index = x;
 				if (x_dir == -1)
+				{
+					sendToClients("x_dir = -1");
 					if (sign == "+")
 						sign = "-";
 					else
 						sign = "+";
+				}
+				else
+				{
+					sendToClients("x_dir = +1");
+				}
 			} else if (motor.equalsIgnoreCase("Y")) {
 				index = y;
 				if (y_dir == -1)
@@ -644,9 +656,9 @@ void parseGcode(String commandLine) {
 				deltat = atoi(posStr.c_str());
 			}
 			if (index > -1) {
-				if (sign == "+")
+				if (sign.equalsIgnoreCase("+"))
 					nextPos[index] = nextPos[index] + atol(posStr.c_str());
-				else if (sign == "-")
+				else if (sign.equalsIgnoreCase("-"))
 					nextPos[index] = nextPos[index] - atol(posStr.c_str());
 				else
 					nextPos[index] = atol(posStr.c_str());
@@ -815,7 +827,7 @@ void wsConnected(WebSocket& socket) {
 	for (int i = 0; i < clients.count(); i++) {
 		clients[i].sendString(
 				"Connected to station: " + wifi_sid.get(currWifiIndex) + ", ROM:" + slotNoStr + ", heapSize: "
-						+ heapSizeStr + ", appVer:1.22, SDK version: " + system_get_sdk_version());
+						+ heapSizeStr + ", appVer:1.27, SDK version: " + system_get_sdk_version());
 	}
 
 }
@@ -924,7 +936,7 @@ void connectOk(IPAddress ip, IPAddress mask, IPAddress gateway) {
 		reportTimer.initializeMs(100, reportAnalogue).start();
 
 	} else if (ipString.equals("192.168.1.113") || ipString.equals("192.168.1.112") || ipString.equals("192.168.1.21")
-			|| ipString.equals("192.168.43.154")) {    //
+			|| ipString.equals("192.168.43.154") || ipString.equals("192.168.43.34")) {    //
 // 4 axis stepper driver
 		Serial.setCallback(serialCallBack);
 		Serial.println("MODE: 4 Axis Stepper driver");
@@ -1035,7 +1047,7 @@ void init() {
 	WifiStation.enable(true);
 
 	checkConnection();
-	procTimer.initializeMs(8000, checkConnection).start();
+	procTimer.initializeMs(15000, checkConnection).start();
 
 	WifiEvents.onStationGotIP(connectOk);
 
